@@ -6,6 +6,7 @@ using System.Text;
 using WebApi.Data;
 using WebApi.Models;
 using WebApi.Repositories;
+using WebApi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,6 +14,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<ProContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
+builder.Services.AddScoped<IStocksService, StocksService>();
 builder.Services.AddScoped<IUsersRepository, UsersRepository>();
 builder.Services.AddSingleton<PasswordHasher<User>>();
 builder.Services.AddAuthentication(options =>
