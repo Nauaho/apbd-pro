@@ -5,7 +5,7 @@ namespace WebApi.Services
 {
     public interface IStocksService
     {
-        Task<TickerDetails?> GetTickersDetailsAsync(string ticker);
+        Task<TickerDetailsDTO?> GetTickersDetailsAsync(string ticker, DateOnly date);
     }
     public class StocksService : IStocksService
     {
@@ -19,25 +19,24 @@ namespace WebApi.Services
             _v1 = configuration["PolygonAPI:Url1"] ?? throw new NullReferenceException();
             _v2 = configuration["PolygonAPI:Url2"] ?? throw new NullReferenceException();
             _v3 = configuration["PolygonAPI:Url3"] ?? throw new NullReferenceException();
-            _apiKey = configuration["PolygonAPI:Key"] ?? throw new NullReferenceException();
+            _apiKey = configuration["PolygonAPI:Default"] ?? throw new NullReferenceException();
         }
 
-        public async Task<TickerDetails?> GetTickersDetailsAsync(string ticker)
+        public async Task<TickerDetailsDTO?> GetTickersDetailsAsync(string ticker, DateOnly date)
         {
             try
             {
-                using HttpClient client = new HttpClient();
-                var response = await client.GetAsync(_v1 + $"/reference/tickers/{ticker}?{_apiKey}");
+                using HttpClient client = new();
+                //Console.WriteLine(_v3 + $"reference/tickers/{ticker}?date={date.ToString("yyyy-MM-dd")}&apiKey={_apiKey}");
+                var response = await client.GetAsync(_v3 + $"reference/tickers/{ticker}?date={date.ToString("yyyy-MM-dd")}&apiKey={_apiKey}");
                 response.EnsureSuccessStatusCode();
-                var details = await response.Content.ReadAsAsync<TickerDetails>();
-                return details;
+                var result = await response.Content.ReadAsAsync<Response?>();
+                return result == null ? null : result.tickerDetails;
             }
             catch (HttpRequestException e) 
             {
-                if (e.HResult == 404)
-                    return null;
-                else
-                    return new TickerDetails();
+                Console.WriteLine($"Error: {e.Message}");
+                return null;
             }
 
             //throw new NotImplementedException();
@@ -48,7 +47,7 @@ namespace WebApi.Services
             throw new NotImplementedException();
         }
 
-        public async Task<TickerDetails> GetTickersDetailsAsync(string Ticker, int queryCount)
+        public async Task<TickerDetailsDTO> GetTickersDetailsAsync(string Ticker, int queryCount)
         {
             throw new NotImplementedException();
         }

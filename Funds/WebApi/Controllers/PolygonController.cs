@@ -16,7 +16,10 @@ namespace WebApi.Controllers
         [HttpGet("{ticker}")]
         public async Task<IActionResult> GetDetails(string ticker)
         {
-            throw new NotImplementedException();
+            var details = await _stocksService.GetTickersDetailsAsync(ticker, DateOnly.FromDateTime(DateTime.Now));
+            if(details == null)
+                return NotFound();
+            else return Ok(details);
         }
 
         [HttpGet("{ticker}/ohlc")]
