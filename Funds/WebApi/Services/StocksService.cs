@@ -1,5 +1,6 @@
 ﻿using System.Runtime.Intrinsics;
 using WebApi.Models;
+using WebApi.Models.DTOs;
 
 namespace WebApi.Services
 {
@@ -31,7 +32,11 @@ namespace WebApi.Services
                 var response = await client.GetAsync(_v3 + $"reference/tickers/{ticker}?date={date.ToString("yyyy-MM-dd")}&apiKey={_apiKey}");
                 response.EnsureSuccessStatusCode();
                 var result = await response.Content.ReadAsAsync<Response?>();
-                return result == null ? null : result.tickerDetails;
+                var tickerDetails = new TickerDetails() 
+                {
+                    Ticker = 
+                };
+                return result == null ? null : result.results;
             }
             catch (HttpRequestException e) 
             {

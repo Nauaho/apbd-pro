@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace WebApi.Models
 {
 
-    public class Address
+    public class AddressDTO
     {
         public string address1 { get; set; } = null!;
         public string city { get; set; } = null!;
@@ -12,7 +12,7 @@ namespace WebApi.Models
         public string postal_code { get; set; } = null!;
     }
 
-    public class Branding
+    public class BrandingDTO
     {
         public string logo_url { get; set; } = null!;
         public string icon_url { get; set; } = null!;
@@ -49,7 +49,7 @@ namespace WebApi.Models
     public class Response
     {
         public string request_id { get; set; } = null!;
-        public TickerDetailsDTO tickerDetails { get; set; } = null!;
+        public TickerDetailsDTO results { get; set; } = null!;
         public string status { get; set; } = null!;
     }
 
