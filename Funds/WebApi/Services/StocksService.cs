@@ -1,4 +1,5 @@
-﻿using System.Runtime.Intrinsics;
+﻿using Newtonsoft.Json;
+using System.Runtime.Intrinsics;
 using WebApi.Models;
 using WebApi.Models.DTOs;
 
@@ -6,7 +7,9 @@ namespace WebApi.Services
 {
     public interface IStocksService
     {
+        Task<TickerOHLC?> GetAggregationAsync(string ticker, int multiplier, string timespan, DateOnly from, DateOnly to, string sort, long limit);
         Task<TickerDetailsDTO?> GetTickersDetailsAsync(string ticker, DateOnly date);
+        Task<TickerOpenClose?> GetTickersOpenCloseAsync(string ticker, DateOnly date);
     }
     public class StocksService : IStocksService
     {
@@ -29,9 +32,9 @@ namespace WebApi.Services
             {
                 using HttpClient client = new();
                 //Console.WriteLine(_v3 + $"reference/tickers/{ticker}?date={date.ToString("yyyy-MM-dd")}&apiKey={_apiKey}");
-                var response = await client.GetAsync(_v3 + $"reference/tickers/{ticker}?date={date.ToString("yyyy-MM-dd")}&apiKey={_apiKey}");
+                var response = await client.GetAsync(_v3 + $"reference/tickers/{ticker}?date={date:yyyy-MM-dd}&apiKey={_apiKey}");
                 response.EnsureSuccessStatusCode();
-                var result = await response.Content.ReadAsAsync<Response?>() ?? throw new NullReferenceException();
+                var result = JsonConvert.DeserializeObject<Response>( await response.Content.ReadAsStringAsync());
                 var tickerDetails = new TickerDetails()
                 {
                     Ticker = result.results.ticker,
@@ -84,14 +87,82 @@ namespace WebApi.Services
             //throw new NotImplementedException();
         }
 
-        public async Task<TickerOpenClose> GetTickersOpenCloseAsync(string ticker, DateOnly date)
+        public async Task<TickerOpenClose?> GetTickersOpenCloseAsync(string ticker, DateOnly date)
         {
-            throw new NotImplementedException();
+            try
+            {
+                using HttpClient client = new();
+                var response = await client.GetAsync(_v1+ $"open-close/{ticker}/{date:yyyy-MM-dd}?adjusted=false&apiKey={_apiKey}");
+                response.EnsureSuccessStatusCode();
+                var result = JsonConvert.DeserializeObject<OpenCloseDTO>(await response.Content.ReadAsStringAsync());
+                var oc = new TickerOpenClose 
+                {
+                    AfterHours = result.afterHours,
+                    Close = result.close,
+                    From = result.from,
+                    High = result.high,
+                    Low = result.low,
+                    Open = result.open,
+                    PreMarket = result.preMarket,
+                    Symbol = result.symbol,
+                    Volume = result.volume
+                };
+                return oc;
+            }
+            catch (HttpRequestException e)
+            {
+                Console.WriteLine($"Error: {e.Message}");
+                return null;
+            }
+            catch (NullReferenceException e)
+            {
+                Console.WriteLine($"Error: {e.Message}");
+                return null;
+            }
         }
 
-        public async Task<TickerDetailsDTO> GetTickersDetailsAsync(string Ticker, int queryCount)
+        public async Task<TickerOHLC?> GetAggregationAsync(string ticker, int multiplier, string timespan, DateOnly from, DateOnly to, string sort, long limit)
         {
-            throw new NotImplementedException();
+            try
+            {
+                using HttpClient client = new();
+                string a = _v2 + $"aggs/ticker/{ticker}/range/{multiplier}/{timespan}/{from:yyyy-MM-dd}/{to:yyyy-MM-dd}?adjusted=false&sort={sort}&limit={limit}&apiKey={_apiKey}";
+                var response = await client.GetAsync(a);
+                response.EnsureSuccessStatusCode();
+                var result = JsonConvert.DeserializeObject<TickerOhlcDTO>(await response.Content.ReadAsStringAsync());
+                Console.WriteLine(result.results.Count());
+                var ohlc = new TickerOHLC()
+                {
+                    Adjusted = result.adjusted,
+                    NextUrl = result.next_url,
+                    QueryCount = result.queryCount,
+                    RequestId = result.request_id,
+                    Bars = result.results.Select(b => new Bar()
+                    {
+                        C = b.c,
+                        H = b.h,
+                        L = b.l,
+                        N = b.n,
+                        O = b.o,
+                        T = b.t,
+                        V = b.v,
+                        Vw = b.vw
+                    }).ToList(),
+                    ResultsCount = result.resultsCount,
+                    Ticker = result.ticker
+                };
+                return ohlc;
+            }
+            catch (HttpRequestException e)
+            {
+                Console.WriteLine($"Error: {e.Message}, {e.TargetSite}");
+                return null;
+            }
+            catch (NullReferenceException e)
+            {
+                Console.WriteLine($"Error: {e.Message}");
+                return null;
+            }
         }
     }
 }
