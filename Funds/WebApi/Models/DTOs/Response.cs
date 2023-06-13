@@ -32,7 +32,7 @@ namespace WebApi.Models
         public string composite_figi { get; set; } = null!;
         public string share_class_figi { get; set; } = null!;
         public string phone_number { get; set; } = null!;
-        public Address address { get; set; } = null!;
+        public AddressDTO address { get; set; } = null!;
         public string description { get; set; } = null!;
         public string sic_code { get; set; } = null!;
         public string sic_description { get; set; } = null!;
@@ -40,7 +40,7 @@ namespace WebApi.Models
         public string homepage_url { get; set; } = null!;
         public long total_employees { get; set; }
         public DateTime list_date { get; set; }
-        public Branding branding { get; set; } = null!;
+        public BrandingDTO branding { get; set; } = null!;
         public long share_class_shares_outstanding { get; set; }
         public long weighted_shares_outstanding { get; set; }
         public int round_lot { get; set; }

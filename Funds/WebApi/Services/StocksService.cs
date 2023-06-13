@@ -31,10 +31,43 @@ namespace WebApi.Services
                 //Console.WriteLine(_v3 + $"reference/tickers/{ticker}?date={date.ToString("yyyy-MM-dd")}&apiKey={_apiKey}");
                 var response = await client.GetAsync(_v3 + $"reference/tickers/{ticker}?date={date.ToString("yyyy-MM-dd")}&apiKey={_apiKey}");
                 response.EnsureSuccessStatusCode();
-                var result = await response.Content.ReadAsAsync<Response?>();
-                var tickerDetails = new TickerDetails() 
+                var result = await response.Content.ReadAsAsync<Response?>() ?? throw new NullReferenceException();
+                var tickerDetails = new TickerDetails()
                 {
-                    Ticker = 
+                    Ticker = result.results.ticker,
+                    Name = result.results.name,
+                    Market = result.results.market,
+                    Locale = result.results.locale,
+                    PrimaryExchange = result.results.primary_exchange,
+                    Type = result.results.type,
+                    Active = result.results.active,
+                    CurrencyName = result.results.currency_name,
+                    Cik = result.results.cik,
+                    CompositeFigi = result.results.composite_figi,
+                    ShareClassFigi = result.results.share_class_figi,
+                    PhoneNumber = result.results.phone_number,
+                    Address = new Localisation()
+                    {
+                        Address = result.results.address.address1,
+                        City = result.results.address.city,
+                        State = result.results.address.state,
+                        PostalCode = result.results.address.postal_code
+                    },
+                    Description = result.results.description,
+                    SicCode = result.results.sic_code,
+                    SicDescription = result.results.sic_description,
+                    TickerRoot = result.results.ticker_root,
+                    HomepageUrl = result.results.homepage_url,
+                    TotalEmployees = result.results.total_employees,
+                    ListDate = result.results.list_date,
+                    Branding = new Branding()
+                    {
+                        LogoUrl = result.results.branding.logo_url,
+                        IconUrl = result.results.branding.icon_url
+                    },
+                    ShareClassSharesOutstanding = result.results.share_class_shares_outstanding,
+                    WeightedSharesOutstanding = result.results.weighted_shares_outstanding,
+                    RoundLot = result.results.round_lot
                 };
                 return result == null ? null : result.results;
             }
@@ -43,7 +76,11 @@ namespace WebApi.Services
                 Console.WriteLine($"Error: {e.Message}");
                 return null;
             }
-
+            catch(NullReferenceException  e) 
+            {
+                Console.WriteLine($"Error: {e.Message}");
+                return null;
+            }
             //throw new NotImplementedException();
         }
 

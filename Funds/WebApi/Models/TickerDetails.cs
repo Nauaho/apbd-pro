@@ -29,7 +29,7 @@ namespace WebApi.Models
         public string CompositeFigi { get; set; } = null!;
         public string ShareClassFigi { get; set; } = null!;
         public string PhoneNumber { get; set; } = null!;
-        public Localisation address { get; set; } = null!;
+        public Localisation Address { get; set; } = null!;
         public string Description { get; set; } = null!;
         public string SicCode { get; set; } = null!;
         public string SicDescription { get; set; } = null!;
