@@ -7,7 +7,7 @@ namespace WebApi.Services
 {
     public interface IStocksService
     {
-        Task<TickerOHLC?> GetAggregationAsync(string ticker, int multiplier, string timespan, DateOnly from, DateOnly to, string sort, long limit);
+        Task<IEnumerable<TickerOHLC?>?> GetAggregationAsync(string ticker, int multiplier, string timespan, DateOnly from, DateOnly to, string sort, long limit);
         Task<TickerDetailsDTO?> GetTickersDetailsAsync(string ticker, DateOnly date);
         Task<TickerOpenClose?> GetTickersOpenCloseAsync(string ticker, DateOnly date);
     }
@@ -49,13 +49,10 @@ namespace WebApi.Services
                     CompositeFigi = result.results.composite_figi,
                     ShareClassFigi = result.results.share_class_figi,
                     PhoneNumber = result.results.phone_number,
-                    Address = new Localisation()
-                    {
-                        Address = result.results.address.address1,
-                        City = result.results.address.city,
-                        State = result.results.address.state,
-                        PostalCode = result.results.address.postal_code
-                    },
+                    Address = result.results.address == null ? null : result.results.address.address1,
+                    City = result.results.address == null ? null : result.results.address.city,
+                    State = result.results.address == null ? null : result.results.address.state,
+                    PostalCode = result.results.address == null ? null : result.results.address.postal_code,
                     Description = result.results.description,
                     SicCode = result.results.sic_code,
                     SicDescription = result.results.sic_description,
@@ -63,11 +60,8 @@ namespace WebApi.Services
                     HomepageUrl = result.results.homepage_url,
                     TotalEmployees = result.results.total_employees,
                     ListDate = result.results.list_date,
-                    Branding = new Branding()
-                    {
-                        LogoUrl = result.results.branding.logo_url,
-                        IconUrl = result.results.branding.icon_url
-                    },
+                    LogoUrl = result.results.branding == null ? null : result.results.branding.logo_url,
+                    IconUrl = result.results.branding == null ? null : result.results.branding.icon_url,
                     ShareClassSharesOutstanding = result.results.share_class_shares_outstanding,
                     WeightedSharesOutstanding = result.results.weighted_shares_outstanding,
                     RoundLot = result.results.round_lot
@@ -121,7 +115,7 @@ namespace WebApi.Services
             }
         }
 
-        public async Task<TickerOHLC?> GetAggregationAsync(string ticker, int multiplier, string timespan, DateOnly from, DateOnly to, string sort, long limit)
+        public async Task<IEnumerable<TickerOHLC?>?> GetAggregationAsync(string ticker, int multiplier, string timespan, DateOnly from, DateOnly to, string sort, long limit)
         {
             try
             {
@@ -131,26 +125,20 @@ namespace WebApi.Services
                 response.EnsureSuccessStatusCode();
                 var result = JsonConvert.DeserializeObject<TickerOhlcDTO>(await response.Content.ReadAsStringAsync());
                 Console.WriteLine(result.results.Count());
-                var ohlc = new TickerOHLC()
+                var ohlc = result.results.Select(b =>  new TickerOHLC()
                 {
-                    Adjusted = result.adjusted,
-                    NextUrl = result.next_url,
-                    QueryCount = result.queryCount,
-                    RequestId = result.request_id,
-                    Bars = result.results.Select(b => new Bar()
-                    {
-                        C = b.c,
-                        H = b.h,
-                        L = b.l,
-                        N = b.n,
-                        O = b.o,
-                        T = b.t,
-                        V = b.v,
-                        Vw = b.vw
-                    }).ToList(),
-                    ResultsCount = result.resultsCount,
-                    Ticker = result.ticker
-                };
+                    C = b.c,
+                    H = b.h,
+                    L = b.l,
+                    N = b.n,
+                    O = b.o,
+                    T = b.t,
+                    V = b.v,
+                    Vw = b.vw,
+                    Multuplier = multiplier,
+                    Timespan = timespan,
+                    Symbol = result.ticker
+                });
                 return ohlc;
             }
             catch (HttpRequestException e)

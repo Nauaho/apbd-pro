@@ -7,7 +7,7 @@ namespace WebApi.Controllers
 {
     [Route("api/stocks/")]
     [ApiController]
-    [Authorize]
+    //[Authorize]
     public class PolygonController : Controller
     {
         private readonly IStocksService _stocksService;
