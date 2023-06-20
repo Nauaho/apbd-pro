@@ -27,18 +27,17 @@ namespace WebApi.Repositories
 
         public async Task<User?> AddUserAsync(RegisterOrLoginRequest rl)
         {
-            if (await _context.Users.AnyAsync(u => u.Login == rl.Login))
+            if (await _context.Users.AnyAsync(u => u.Login == rl.Login || u.Email == rl.Email))
                 return null;
             var user = new User
             {
+                Email = rl.Email,
                 Login = rl.Login,
                 RefreshToken = GenerateRefreshJWT(rl.Login),
             };
             user.Password = _hasher.HashPassword(user, rl.Password);
-            Console.WriteLine(user.Password);
             await _context.Users.AddAsync(user);
             await _context.SaveChangesAsync();
-            Console.WriteLine(user == null ? "aaaaaaa": user.Login);
             return user;
         }
 
@@ -57,7 +56,7 @@ namespace WebApi.Repositories
 
         public async Task<bool> CheckUserAsync(RegisterOrLoginRequest rl)
         {
-            var u = _context.Users.Where(a => a.Login == rl.Login).FirstOrDefault();
+            var u = _context.Users.Where(a => a.Login == rl.Login || a.Email == rl.Email).FirstOrDefault();
 
             if (u == null)
                 return false;

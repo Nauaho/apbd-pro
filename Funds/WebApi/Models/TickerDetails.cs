@@ -37,8 +37,10 @@ namespace WebApi.Models
         public string Ticker { get; set; } = null!;
 
         //Connected Values
-        public virtual ICollection<User> UsersWatching { get; set; } = new List<User>();
+        public virtual ICollection<TickerUser> UsersWatching { get; set; } = new List<TickerUser>();
         public virtual ICollection<TickerSimilar> Similar { get; set; } = new List<TickerSimilar>();
+        public virtual ICollection<TickerSimilar> SimilarTo { get; set; } = new List<TickerSimilar>();
+
         public virtual ICollection<TickerOpenClose> TickerOpenCloses { get; set; } = new List<TickerOpenClose>();
         public virtual ICollection<TickerOHLC> TickerOHLCs { get; set; } = new List<TickerOHLC>();
     }

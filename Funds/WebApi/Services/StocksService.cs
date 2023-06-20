@@ -2,31 +2,34 @@
 using System.Runtime.Intrinsics;
 using WebApi.Models;
 using WebApi.Models.DTOs;
+using WebApi.Repositories;
 
 namespace WebApi.Services
 {
     public interface IStocksService
     {
-        Task<IEnumerable<TickerOHLC?>?> GetAggregationAsync(string ticker, int multiplier, string timespan, DateOnly from, DateOnly to, string sort, long limit);
-        Task<TickerDetailsDTO?> GetTickersDetailsAsync(string ticker, DateOnly date);
-        Task<TickerOpenClose?> GetTickersOpenCloseAsync(string ticker, DateOnly date);
+        public Task<IEnumerable<TickerOHLC?>?> GetAggregationAsync(string ticker, int multiplier, string timespan, DateOnly from, DateOnly to, string sort, long limit);
+        public Task<TickerDetails?> GetTickersDetailsAsync(string ticker, DateOnly date);
+        public Task<TickerOpenClose?> GetTickersOpenCloseAsync(string ticker, DateOnly date);
     }
     public class StocksService : IStocksService
     {
+        private readonly IStocksRepository _stocksRepository;
         private readonly string _v1 = null!;
         private readonly string _v2 = null!;
         private readonly string _v3 = null!;
         private readonly string _apiKey = null!;
 
-        public StocksService(IConfiguration configuration) 
+        public StocksService(IConfiguration configuration, IStocksRepository stocksRepository)
         {
             _v1 = configuration["PolygonAPI:Url1"] ?? throw new NullReferenceException();
             _v2 = configuration["PolygonAPI:Url2"] ?? throw new NullReferenceException();
             _v3 = configuration["PolygonAPI:Url3"] ?? throw new NullReferenceException();
             _apiKey = configuration["PolygonAPI:Default"] ?? throw new NullReferenceException();
+            _stocksRepository = stocksRepository;
         }
 
-        public async Task<TickerDetailsDTO?> GetTickersDetailsAsync(string ticker, DateOnly date)
+        public async Task<TickerDetails?> GetTickersDetailsAsync(string ticker, DateOnly date)
         {
             try
             {
@@ -66,12 +69,12 @@ namespace WebApi.Services
                     WeightedSharesOutstanding = result.results.weighted_shares_outstanding,
                     RoundLot = result.results.round_lot
                 };
-                return result == null ? null : result.results;
+                await _stocksRepository.AddTickerDetailsAsync(tickerDetails);
+                return tickerDetails;
             }
-            catch (HttpRequestException e) 
+            catch (HttpRequestException) 
             {
-                Console.WriteLine($"Error: {e.Message}");
-                return null;
+                return await _stocksRepository.GetTickersDetailsAsync(ticker);
             }
             catch(NullReferenceException  e) 
             {
@@ -101,12 +104,12 @@ namespace WebApi.Services
                     Symbol = result.symbol,
                     Volume = result.volume
                 };
+                await _stocksRepository.AddTickerOpenCloseAsync(oc);
                 return oc;
             }
-            catch (HttpRequestException e)
+            catch (HttpRequestException)
             {
-                Console.WriteLine($"Error: {e.Message}");
-                return null;
+                return await _stocksRepository.GetTickersOpenCloseAsync(ticker, date);
             }
             catch (NullReferenceException e)
             {
@@ -139,12 +142,12 @@ namespace WebApi.Services
                     Timespan = timespan,
                     Symbol = result.ticker
                 });
+                await _stocksRepository.AddTickerOHLCAsync(ohlc);
                 return ohlc;
             }
-            catch (HttpRequestException e)
+            catch (HttpRequestException)
             {
-                Console.WriteLine($"Error: {e.Message}, {e.TargetSite}");
-                return null;
+                return await _stocksRepository.GetAggregationAsync(ticker, multiplier, timespan, from, to);
             }
             catch (NullReferenceException e)
             {

@@ -20,6 +20,6 @@ namespace WebApi.Models
 
         public DateTime RefreshTokenExp { get; set; } = DateTime.Now.AddDays(5);
 
-        public virtual ICollection<TickerDetails> TickersWatching { get; set;} = new List<TickerDetails>();
+        public virtual ICollection<TickerUser> TickersWatching { get; set;} = new List<TickerUser>();
     }
 }

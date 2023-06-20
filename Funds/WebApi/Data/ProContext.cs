@@ -7,6 +7,12 @@ namespace WebApi.Data
     {
         public DbSet<User> Users { get; set; }
         public DbSet<TickerDetails> TickerDetails { get; set; }
+        public DbSet<TickerOHLC> TickerOHLC { get; set; }
+        public DbSet<TickerOpenClose> TickerOpenClose { get; set; }
+        public DbSet<TickerSimilar> TickerSimilar { get; set; }
+        public DbSet<TickerUser> tickerUsers { get; set; }
+
+
         public ProContext(DbContextOptions options) : base(options)
         {
         }
@@ -19,7 +25,7 @@ namespace WebApi.Data
         {
             modelBuilder.Entity<User>(entity =>
             {
-                entity.HasKey(e => e.Email).HasName("User_pk");
+                entity.HasKey(e => e.Login).HasName("User_pk");
                 entity.Property(e => e.Email).HasMaxLength(255).IsRequired();
                 entity.Property(e => e.Login).HasMaxLength(100).IsRequired();
                 entity.Property(e => e.Password).HasMaxLength(100).IsRequired();
@@ -56,21 +62,20 @@ namespace WebApi.Data
                 e.Property(e => e.ShareClassSharesOutstanding);
                 e.Property(e => e.WeightedSharesOutstanding);
                 e.Property(e => e.RoundLot);
-
             });
 
             modelBuilder.Entity<TickerSimilar>(e =>
             {
                 e.HasKey(e => new { e.TickerOneId, e.TickerTwoId }).HasName("Ticker_Similar_pk");
-                e.Property(e=> e.TickerOne).IsRequired();
-                e.Property(e=>e.TickerTwo).IsRequired();
+                e.Property(e => e.TickerOneId);
+                e.Property(e => e.TickerTwoId);
                 e.HasOne(e => e.TickerOne).WithMany(e => e.Similar).HasForeignKey(e=> e.TickerOneId);
-                e.HasOne(e => e.TickerTwo).WithMany(e => e.Similar).HasForeignKey(e => e.TickerTwoId);
+                e.HasOne(e => e.TickerTwo).WithMany(e => e.SimilarTo).HasForeignKey(e => e.TickerTwoId).OnDelete(DeleteBehavior.Restrict); ;
             });
 
             modelBuilder.Entity<TickerOHLC>(e => 
             {
-                e.HasKey(e => new {e.Symbol, e.Timespan, e.Multuplier}).HasName("Ohlc_pk");
+                e.HasKey(e => new {e.Symbol, e.Timespan, e.Multuplier, e.T}).HasName("Ohlc_pk");
                 e.Property(e => e.Symbol).HasMaxLength(100).IsRequired();
                 e.Property(e => e.C).IsRequired();
                 e.Property(e => e.H).IsRequired();
@@ -86,7 +91,20 @@ namespace WebApi.Data
                 e.HasOne(a => a.Ticker).WithMany(b => b.TickerOHLCs).HasForeignKey(d => d.Symbol);
             });
 
+            modelBuilder.Entity<TickerOpenClose>(e => 
+            {
+                e.HasKey( e => new { e.Symbol, e.From }).HasName("TockerOpenClose_pk");
+                e.HasOne(e => e.Ticker).WithMany(e => e.TickerOpenCloses).HasForeignKey( e=>e.Symbol);
+            });
 
+            modelBuilder.Entity<TickerUser>(e =>
+            {
+                e.HasKey( e => new { e.TickerSymbol, e.UserLogin}).HasName("Ticke_rUser_pk");
+                e.Property( e=> e.UserLogin).HasMaxLength(100).IsRequired();
+                e.Property(e => e.TickerSymbol).HasMaxLength(100).IsRequired();
+                e.HasOne(e => e.User).WithMany(e => e.TickersWatching).HasForeignKey(e => e.UserLogin);
+                e.HasOne(e => e.Ticker).WithMany(e => e.UsersWatching).HasForeignKey(e => e.TickerSymbol);
+            });
         }
     }
 }

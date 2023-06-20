@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using WebApi.Data;
 
@@ -11,9 +12,11 @@ using WebApi.Data;
 namespace WebApi.Migrations
 {
     [DbContext(typeof(ProContext))]
-    partial class ProContextModelSnapshot : ModelSnapshot
+    [Migration("20230620143419_Try4")]
+    partial class Try4
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -144,9 +147,6 @@ namespace WebApi.Migrations
                     b.Property<long>("Multuplier")
                         .HasColumnType("bigint");
 
-                    b.Property<long>("T")
-                        .HasColumnType("bigint");
-
                     b.Property<float>("C")
                         .HasColumnType("real");
 
@@ -162,13 +162,16 @@ namespace WebApi.Migrations
                     b.Property<float>("O")
                         .HasColumnType("real");
 
+                    b.Property<long>("T")
+                        .HasColumnType("bigint");
+
                     b.Property<long>("V")
                         .HasColumnType("bigint");
 
                     b.Property<float>("Vw")
                         .HasColumnType("real");
 
-                    b.HasKey("Symbol", "Timespan", "Multuplier", "T")
+                    b.HasKey("Symbol", "Timespan", "Multuplier")
                         .HasName("Ohlc_pk");
 
                     b.ToTable("TickerOHLC");
@@ -241,7 +244,7 @@ namespace WebApi.Migrations
 
                     b.HasIndex("UserLogin");
 
-                    b.ToTable("tickerUsers");
+                    b.ToTable("TickerUser");
                 });
 
             modelBuilder.Entity("WebApi.Models.User", b =>

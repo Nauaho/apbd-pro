@@ -17,6 +17,7 @@ builder.Services.AddDbContext<ProContext>(options =>
 builder.Services.AddScoped<IStocksService, StocksService>();
 builder.Services.AddScoped<IUsersRepository, UsersRepository>();
 builder.Services.AddSingleton<PasswordHasher<User>>();
+builder.Services.AddScoped<IStocksRepository, StocksRepository>();
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
