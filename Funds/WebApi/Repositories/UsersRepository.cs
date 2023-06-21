@@ -10,8 +10,11 @@ namespace WebApi.Repositories
 {
     public interface IUsersRepository
     {
+        public Task<ICollection<TickerDetails>?> AddSubscriptionAsync(string login, string symbol);
         public Task<User?> AddUserAsync(RegisterOrLoginRequest rl);
         public Task<bool> CheckUserAsync(RegisterOrLoginRequest rl);
+        public Task<bool> DeleteSubscriptionAsync(string login, string symbol);
+        public Task<ICollection<TickerDetails>?> GetSubscriptionAsync(string login);
         public Task<bool> UpdateRefreshtokenAsync(string RefreshToken);
     }
     public class UsersRepository : IUsersRepository
@@ -90,5 +93,40 @@ namespace WebApi.Repositories
             var jwt = new JwtSecurityTokenHandler().WriteToken(token);
             return jwt;
         }
+
+        public async Task<ICollection<TickerDetails>?> GetSubscriptionAsync(string login)
+        {
+            var usersMaybe =  _context.Users.Include(u => u.TickersWatching)
+                                           .ThenInclude(t => t.Ticker)
+                                           .Where(a => a.Login == login);
+            if (!usersMaybe.Any())
+                return null;
+            var user = await usersMaybe.FirstAsync();
+            var subs = user.TickersWatching
+                           .Select(ts => ts.Ticker)
+                           .ToList();
+            return subs;
+        }
+
+        public async Task<ICollection<TickerDetails>?> AddSubscriptionAsync(string login, string symbol)
+        {
+            var a = await _context.TickerUser.Where(s => s.UserLogin == login && s.TickerSymbol == symbol).FirstOrDefaultAsync();
+            if (a != null)
+                return null;
+            await _context.TickerUser.AddAsync( new TickerUser { UserLogin = login, TickerSymbol = symbol} );
+            await _context.SaveChangesAsync();
+            return await GetSubscriptionAsync(login);
+        }
+
+        public async Task<bool> DeleteSubscriptionAsync(string login, string symbol)
+        {
+            var a = await _context.TickerUser.Where(s => s.UserLogin == login && s.TickerSymbol == symbol).FirstOrDefaultAsync();
+            if (a == null) 
+                return false;
+            _context.TickerUser.Remove(a);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
     }
 }

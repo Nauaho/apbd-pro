@@ -34,6 +34,7 @@ namespace WebApi.Controllers
             else { return Unauthorized(); }
 
         }
+
         [HttpPost("register")]
         public async Task<IActionResult> Register(RegisterOrLoginRequest rl)
         {
@@ -41,7 +42,7 @@ namespace WebApi.Controllers
             var res = await _usersRepository.AddUserAsync(rl);
             if (res == null)
                 return BadRequest();
-            return Created($"api/user/{res.Login}", new { res.RefreshToken, Token = GenerateJWT() });
+            return Created($"api/users/{res.Login}", new { res.RefreshToken, Token = GenerateJWT() });
         }
 
         [HttpPost("refresh/token")]
@@ -65,6 +66,97 @@ namespace WebApi.Controllers
             );
             var jwt = new JwtSecurityTokenHandler().WriteToken(token);
             return jwt;
+        }
+
+        [HttpGet("{login}/subs")]
+        public async Task<IActionResult> GetSubs(string login)
+        {
+            var r = await _usersRepository.GetSubscriptionAsync(login);
+            if (r == null) 
+                return NotFound();
+            var result = r.Select(t => new TickerDTO
+            {
+                Name = t.Name,
+                Market = t.Market,
+                Locale = t.Locale,
+                PrimaryExchange = t.PrimaryExchange,
+                Type = t.Type,
+                Active = t.Active,
+                CurrencyName = t.CurrencyName,
+                Cik = t.Cik,
+                CompositeFigi = t.CompositeFigi,
+                ShareClassFigi = t.ShareClassFigi,
+                PhoneNumber = t.PhoneNumber,
+                Address = t.Address,
+                City = t.City,
+                State = t.State,
+                PostalCode = t.PostalCode,
+                Description = t.Description,
+                SicCode = t.SicCode,
+                SicDescription = t.SicDescription,
+                TickerRoot = t.TickerRoot,
+                HomepageUrl = t.HomepageUrl,
+                TotalEmployees = t.TotalEmployees,
+                ListDate = t.ListDate,
+                LogoUrl = t.LogoUrl,
+                IconUrl = t.IconUrl,
+                ShareClassSharesOutstanding = t.ShareClassSharesOutstanding,
+                WeightedSharesOutstanding = t.WeightedSharesOutstanding,
+                RoundLot = t.RoundLot,
+                Ticker = t.Ticker,
+                Similar = t.Similar.Select(s => s.TickerTwo).ToList(),
+            });
+            return Ok(result);
+        }
+
+        [HttpPost("{login}/subs/subscribe")]
+        public async Task<IActionResult> AddSub(string login, string ticker)
+        {
+            var r = await _usersRepository.AddSubscriptionAsync(login, ticker);
+            if (r == null) return Conflict($"api/users/{login}/subs");
+            var result = r.Select(t => new TickerDTO
+            {
+               Name = t.Name,
+               Market = t.Market,
+               Locale = t.Locale,
+               PrimaryExchange = t.PrimaryExchange,
+               Type = t.Type,
+               Active = t.Active,
+               CurrencyName = t.CurrencyName,
+               Cik = t.Cik,
+               CompositeFigi = t.CompositeFigi,
+               ShareClassFigi = t.ShareClassFigi,
+               PhoneNumber = t.PhoneNumber,
+               Address = t.Address,
+               City = t.City,
+               State = t.State,
+               PostalCode = t.PostalCode,
+               Description  = t.Description,   
+               SicCode = t.SicCode,
+               SicDescription = t.SicDescription,
+               TickerRoot = t.TickerRoot,
+               HomepageUrl = t.HomepageUrl,
+               TotalEmployees = t.TotalEmployees,
+               ListDate = t.ListDate,
+               LogoUrl = t.LogoUrl,
+               IconUrl = t.IconUrl,
+               ShareClassSharesOutstanding = t.ShareClassSharesOutstanding,
+               WeightedSharesOutstanding = t.WeightedSharesOutstanding,
+               RoundLot = t.RoundLot,
+               Ticker = t.Ticker,
+               Similar = t.Similar.Select(s => s.TickerTwo).ToList(),
+            });
+            return Created($"api/{login}/subs/", result);
+        }
+
+        [HttpDelete("{login}/subs/unsubscribe")]
+        public async Task<IActionResult> RemoveSub(string login, string ticker)
+        {
+            var r = await _usersRepository.DeleteSubscriptionAsync(login, ticker);
+            if (r)
+                return Ok();
+            else
+                return NoContent();
         }
     }
 }

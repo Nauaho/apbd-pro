@@ -10,7 +10,7 @@ namespace WebApi.Data
         public DbSet<TickerOHLC> TickerOHLC { get; set; }
         public DbSet<TickerOpenClose> TickerOpenClose { get; set; }
         public DbSet<TickerSimilar> TickerSimilar { get; set; }
-        public DbSet<TickerUser> tickerUsers { get; set; }
+        public DbSet<TickerUser> TickerUser { get; set; }
 
 
         public ProContext(DbContextOptions options) : base(options)
