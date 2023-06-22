@@ -8,7 +8,7 @@ namespace WebApi.Services
 {
     public interface IStocksService
     {
-        public Task<IEnumerable<TickerOHLC?>?> GetAggregationAsync(string ticker, int multiplier, string timespan, DateOnly from, DateOnly to, string sort, long limit);
+        public Task<IEnumerable<TickerOHLC>?> GetAggregationAsync(string ticker, int multiplier, string timespan, DateOnly from, DateOnly to, string sort, long limit);
         public Task<TickerDetails?> GetTickersDetailsAsync(string ticker, DateOnly date);
         public Task<TickerOpenClose?> GetTickersOpenCloseAsync(string ticker, DateOnly date);
     }
@@ -118,7 +118,7 @@ namespace WebApi.Services
             }
         }
 
-        public async Task<IEnumerable<TickerOHLC?>?> GetAggregationAsync(string ticker, int multiplier, string timespan, DateOnly from, DateOnly to, string sort, long limit)
+        public async Task<IEnumerable<TickerOHLC>?> GetAggregationAsync(string ticker, int multiplier, string timespan, DateOnly from, DateOnly to, string sort, long limit)
         {
             try
             {

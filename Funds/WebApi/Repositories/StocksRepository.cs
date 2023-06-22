@@ -10,7 +10,7 @@ namespace WebApi.Repositories
         public Task AddTickerDetailsAsync(TickerDetails tickerDetails);
         public Task AddTickerOHLCAsync(IEnumerable<TickerOHLC> tickerOhlc);
         public Task AddTickerOpenCloseAsync(TickerOpenClose tickerOpenClose);
-        public Task<IEnumerable<TickerOHLC?>?> GetAggregationAsync(string ticker, int multiplier, string timespan, DateOnly from, DateOnly to);
+        public Task<IEnumerable<TickerOHLC>?> GetAggregationAsync(string ticker, int multiplier, string timespan, DateOnly from, DateOnly to);
         public Task<TickerDetails?> GetTickersDetailsAsync(string ticker);
         public Task<TickerOpenClose?> GetTickersOpenCloseAsync(string ticker, DateOnly date);
     }
@@ -41,7 +41,7 @@ namespace WebApi.Repositories
                 return await a.FirstAsync();
         }
 
-        public async Task<IEnumerable<TickerOHLC?>?> GetAggregationAsync(string ticker, int multiplier, string timespan, DateOnly from, DateOnly to)
+        public async Task<IEnumerable<TickerOHLC>?> GetAggregationAsync(string ticker, int multiplier, string timespan, DateOnly from, DateOnly to)
         {
             var uTo = new DateTimeOffset(to.ToDateTime(TimeOnly.MinValue)).ToUnixTimeMilliseconds();
             var uFrom = new DateTimeOffset(from.ToDateTime(TimeOnly.MinValue)).ToUnixTimeMilliseconds();

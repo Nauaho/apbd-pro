@@ -34,7 +34,7 @@ namespace WebApi.Repositories
                 return null;
             var user = new User
             {
-                Email = rl.Email,
+                Email = rl.Email ?? throw new NullReferenceException(),
                 Login = rl.Login,
                 RefreshToken = GenerateRefreshJWT(rl.Login),
             };

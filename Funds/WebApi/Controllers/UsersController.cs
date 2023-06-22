@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using System.Collections.Generic;
@@ -68,6 +69,7 @@ namespace WebApi.Controllers
             return jwt;
         }
 
+        [Authorize]
         [HttpGet("{login}/subs")]
         public async Task<IActionResult> GetSubs(string login)
         {
@@ -109,6 +111,7 @@ namespace WebApi.Controllers
             return Ok(result);
         }
 
+        [Authorize]
         [HttpPost("{login}/subs/subscribe")]
         public async Task<IActionResult> AddSub(string login, string ticker)
         {
@@ -149,6 +152,7 @@ namespace WebApi.Controllers
             return Created($"api/{login}/subs/", result);
         }
 
+        [Authorize]
         [HttpDelete("{login}/subs/unsubscribe")]
         public async Task<IActionResult> RemoveSub(string login, string ticker)
         {

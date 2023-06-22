@@ -6,8 +6,7 @@ namespace WebApi.Models.DTOs
     {
         [EmailAddress]
         [MaxLength(255)]
-        [Required]
-        public string Email { get; set; } = null!;
+        public string? Email { get; set; }
         [MaxLength(100)]
         [Required]
         public string Login { get; set; } = null!;
