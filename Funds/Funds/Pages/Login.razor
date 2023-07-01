@@ -1,0 +1,21 @@
+﻿@page "/login"
+@inject Funds.Data.IAuthService AuthService
+
+<h3>Login</h3>
+<label for="login">Login</label>
+<input type="text" id="login" @bind-value="login" >
+<label for="password">Password</label>
+<input type="password" id="password" @bind-value="password">
+<p>@accessToken</p>
+<button @onclick ="LogIn" >Login</button>
+
+@code {
+    string login = "";
+    string password = "";
+    string accessToken = "";
+    string refreshToken = null!;
+    async void LogIn()
+    {
+        accessToken = await AuthService.LoginUser(login, password)?? "login isn't successful";
+    }
+}
