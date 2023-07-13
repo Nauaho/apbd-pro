@@ -14,11 +14,12 @@ namespace Funds.Data
     public class AuthService : IAuthService
     {
         private readonly string _apiLink;
-
-        public AuthService(IConfiguration configuration)
+        private readonly IHttpClientFactory _httpClientFactory;
+        public AuthService(IConfiguration configuration, IHttpClientFactory httpClientFactory)
         {
             _apiLink = configuration["WebApi:Default"]
                             ?? throw new NullReferenceException();
+            _httpClientFactory = httpClientFactory;
         }
         public async Task<string?> LoginUser(string username, string password)
         {
@@ -29,9 +30,9 @@ namespace Funds.Data
                     Login = username,
                     Password = password
                 });
-            using HttpClient client = new();
+            using HttpClient client = _httpClientFactory.CreateClient();
             using StringContent content = new(json, Encoding.UTF8, "application/json");
-            var response = await client.PostAsync(_apiLink+ "/api/users/login", content);
+            using var response = await client.PostAsync(_apiLink+ "/api/users/login", content);
             if (!response.IsSuccessStatusCode) 
                 return null;
             var value = JsonConvert.DeserializeObject<TokenDTO>(await response.Content.ReadAsStringAsync() );
@@ -48,9 +49,9 @@ namespace Funds.Data
                 Login = username,
                 Password = password
             });
-            using HttpClient client = new();
+            using HttpClient client = _httpClientFactory.CreateClient();
             using StringContent content = new(json, Encoding.UTF8, "application/json");
-            var response = await client.PostAsync(_apiLink + "/api/users/register", content);
+            using var response = await client.PostAsync(_apiLink + "/api/users/register", content);
             if (!response.IsSuccessStatusCode)
                 return null;
 

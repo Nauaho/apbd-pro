@@ -39,9 +39,15 @@
     <p>Already have an account? <button @onclick="SignIn">Sign in</button></p>
 }
 
-@if(action == login)
+@if(action == "dashboard")
 {
     <h1>Welcome back, @login!</h1>
+    <button @onclick="Watchlist">Watchlist</button>
+}
+
+@if (action == "watchlist")
+{
+    <h1>Your watchlist, @login!</h1>
 }
 
 @code {
@@ -65,7 +71,7 @@
         }
         else
         {
-            action = login;
+            action = "dashboard";
             dontShowErrorMessage = true;
             Console.WriteLine($"Action {action}");
         }
@@ -80,8 +86,8 @@
         {
             accessToken = tokens.Token;
             refreshToken = tokens.RefreshToken;
+            action = "dashboard";
             dontShowErrorMessage = true;
-            action = login;
         }
     }
 
@@ -93,6 +99,11 @@
     void SignIn()
     {
         action = "login";
+    }
+
+    void Watchlist()
+    {
+        action = "watchlist";
     }
 
     private void ShowError(string newErrorMessage)

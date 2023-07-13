@@ -11,6 +11,7 @@ namespace WebApi.Data
         public DbSet<TickerOpenClose> TickerOpenClose { get; set; }
         public DbSet<TickerSimilar> TickerSimilar { get; set; }
         public DbSet<TickerUser> TickerUser { get; set; }
+        public DbSet<RefreshToken> RefreshToken { get; set; }
 
 
         public ProContext(DbContextOptions options) : base(options)
@@ -104,6 +105,16 @@ namespace WebApi.Data
                 e.Property(e => e.TickerSymbol).HasMaxLength(100).IsRequired();
                 e.HasOne(e => e.User).WithMany(e => e.TickersWatching).HasForeignKey(e => e.UserLogin);
                 e.HasOne(e => e.Ticker).WithMany(e => e.UsersWatching).HasForeignKey(e => e.TickerSymbol);
+            });
+
+            modelBuilder.Entity<RefreshToken>(e =>
+            {
+                e.HasKey(e => new { e.UserLogin, e.Session }).HasName("RefreshToken_pk");
+                e.Property(e => e.UserLogin ).HasMaxLength(100).IsRequired();
+                e.Property(e => e.Session).HasMaxLength(100).IsRequired();
+                e.Property(e => e.Token ).HasMaxLength(500).IsRequired();
+                e.Property(e => e.Expiration ).IsRequired();
+                e.HasOne( e => e.User ).WithMany( e => e.RefreshTokens).HasForeignKey(e => e.UserLogin);
             });
         }
     }

@@ -27,13 +27,10 @@ namespace WebApi.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login(RegisterOrLoginRequest rl)
         {
-            if (await _usersRepository.CheckUserAsync(rl))
-            {
-
-                return Ok(new { Token = GenerateJWT() });
-            }
-            else { return Unauthorized(); }
-
+            var rt = await _usersRepository.CheckUserAsync(rl);
+            if (rt is null)
+                return Unauthorized();
+            return Ok(new {RefreshToken = rt.Token, AccesssToken = GenerateJWT() });
         }
 
         [HttpPost("register")]
@@ -43,14 +40,15 @@ namespace WebApi.Controllers
             var res = await _usersRepository.AddUserAsync(rl);
             if (res == null)
                 return BadRequest();
-            return Created($"api/users/{res.Login}", new { res.RefreshToken, Token = GenerateJWT() });
+            return Created($"api/users/{res.UserLogin}", new { RefreshToken = res.Token, AccessToken = GenerateJWT() });
         }
 
         [HttpPost("refresh/token")]
         public async Task<IActionResult> NewAccessToken(RefreshToken rt)
         {
-            if (await _usersRepository.UpdateRefreshtokenAsync(rt.RToken))
-                return Ok(GenerateJWT());
+            var res = await _usersRepository.UpdateRefreshTokenAsync(rt.RToken);
+            if (res is not null)
+                return Ok(new { RefreshToken = res, AccessToken = GenerateJWT() });
             else { return Unauthorized(); }
         }
 

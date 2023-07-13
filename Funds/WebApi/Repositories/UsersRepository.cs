@@ -5,17 +5,21 @@ using WebApi.Models;
 using WebApi.Models.DTOs;
 using WebApi.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Writers;
+using Microsoft.IdentityModel.Tokens;
+using System.Security.Cryptography;
+using System.Data.SqlTypes;
 
 namespace WebApi.Repositories
 {
     public interface IUsersRepository
     {
         public Task<ICollection<TickerDetails>?> AddSubscriptionAsync(string login, string symbol);
-        public Task<User?> AddUserAsync(RegisterOrLoginRequest rl);
-        public Task<bool> CheckUserAsync(RegisterOrLoginRequest rl);
+        public Task<Models.RefreshToken?> AddUserAsync(RegisterOrLoginRequest rl);
+        public Task<Models.RefreshToken?> CheckUserAsync(RegisterOrLoginRequest rl);
         public Task<bool> DeleteSubscriptionAsync(string login, string symbol);
         public Task<ICollection<TickerDetails>?> GetSubscriptionAsync(string login);
-        public Task<bool> UpdateRefreshtokenAsync(string RefreshToken);
+        public Task<string?> UpdateRefreshTokenAsync(string RefreshToken);
     }
     public class UsersRepository : IUsersRepository
     {
@@ -28,7 +32,7 @@ namespace WebApi.Repositories
             _hasher = hasher;
         }
 
-        public async Task<User?> AddUserAsync(RegisterOrLoginRequest rl)
+        public async Task<Models.RefreshToken?> AddUserAsync(RegisterOrLoginRequest rl)
         {
             if (await _context.Users.AnyAsync(u => u.Login == rl.Login || u.Email == rl.Email))
                 return null;
@@ -36,62 +40,110 @@ namespace WebApi.Repositories
             {
                 Email = rl.Email ?? throw new NullReferenceException(),
                 Login = rl.Login,
-                RefreshToken = GenerateRefreshJWT(rl.Login),
             };
             user.Password = _hasher.HashPassword(user, rl.Password);
             await _context.Users.AddAsync(user);
+            var refreshToken = CreateRefreshToken(user);
+            await _context.RefreshToken.AddAsync(refreshToken);
             await _context.SaveChangesAsync();
-            return user;
+            return refreshToken;
         }
 
-        public async Task<bool> UpdateRefreshtokenAsync(string RefreshToken)
+        public async Task<string?> UpdateRefreshTokenAsync(string RefreshToken)
         {
-            var u = await _context.Users.Where(u => u.RefreshToken == RefreshToken).FirstOrDefaultAsync();
-            if (u == null)
-                return false;
-            if (DateTime.Now > u.RefreshTokenExp)
+            var session = GetSession(RefreshToken);
+            Console.WriteLine("Session: "+session);
+            if (session is null)
+                return null;
+
+            var invalidate = await _context.RefreshToken.FirstOrDefaultAsync(r => r.Session == session);
+            Console.WriteLine("Invalidate: " + invalidate);
+            if (invalidate is null)
+                return null;
+
+            var refreshToken = await _context.RefreshToken.FirstOrDefaultAsync(r => r.Token == RefreshToken);
+            Console.WriteLine("RT: " + refreshToken);
+            if (refreshToken == null) 
             {
-                u.RefreshToken = GenerateRefreshJWT(u.Login);
-                u.RefreshTokenExp = DateTime.Now.AddDays(5);
+                _context.RefreshToken.Remove(invalidate);
+                await _context.SaveChangesAsync();
+                return null;
             }
-            return true;
+
+            refreshToken.Token = GenerateRefreshJWT(refreshToken.UserLogin, refreshToken.Session);
+            Console.WriteLine(refreshToken.Token);
+            refreshToken.Expiration = DateTime.Now.AddDays(5);
+            await _context.SaveChangesAsync();
+            return refreshToken.Token;
         }
 
-        public async Task<bool> CheckUserAsync(RegisterOrLoginRequest rl)
+        public async Task<Models.RefreshToken?> CheckUserAsync(RegisterOrLoginRequest rl)
         {
             var u = _context.Users.Where(a => a.Login == rl.Login || a.Email == rl.Email).FirstOrDefault();
 
             if (u == null)
-                return false;
+                return null;
             if (u.Password == null)
                 throw new NullReferenceException();
 
             var res = _hasher.VerifyHashedPassword(u, u.Password, rl.Password);
             if (res == PasswordVerificationResult.Success)
             {
-                return true;
+                var a = CreateRefreshToken(u);
+                await _context.RefreshToken.AddAsync(a);
+                await _context.SaveChangesAsync();
+                return a;
             }
             else if (res == PasswordVerificationResult.Failed)
             {
-                return false;
+                return null;
             }
             else
             {
                 u.Password = _hasher.HashPassword(u, u.Password);
+                var a = CreateRefreshToken(u);
+                await _context.RefreshToken.AddAsync(a);
                 await _context.SaveChangesAsync();
-                return true;
+                return a;
             }
         }
 
-        private static string GenerateRefreshJWT(string login)
+        private static string GenerateRefreshJWT(string login, string session)
         {
             var token = new JwtSecurityToken
             (
                 audience: login,
-                expires: DateTime.Now.AddMinutes(5)
+                expires: DateTime.Now.AddDays(5),
+                issuer: session
             );
             var jwt = new JwtSecurityTokenHandler().WriteToken(token);
             return jwt;
+        }
+
+        private static string? GetSession(string token)
+        {
+            try
+            {
+                var jwt = new JwtSecurityToken (token);
+                return jwt.Issuer;
+
+            }catch(Exception) 
+            {
+                return null;
+            }
+        }
+
+        private static Models.RefreshToken CreateRefreshToken(User user)
+        {
+            var a = Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
+            var refreshToken = new Models.RefreshToken()
+            {
+                Session = a,
+                Token = GenerateRefreshJWT(user.Login, a),
+                Expiration = DateTime.Now.AddDays(5),
+                UserLogin = user.Login
+            };
+            return refreshToken;
         }
 
         public async Task<ICollection<TickerDetails>?> GetSubscriptionAsync(string login)
