@@ -31,6 +31,5 @@
         public long WeightedSharesOutstanding { get; set; }
         public int RoundLot { get; set; }
         public string Ticker { get; set; } = null!;
-        public virtual ICollection<Stock> Similar { get; set; } = new List<Stock>();
     }
 }

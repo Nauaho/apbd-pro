@@ -1,4 +1,6 @@
-﻿using Newtonsoft.Json;
+﻿using Microsoft.AspNetCore.Mvc.Routing;
+using Newtonsoft.Json;
+using System.Buffers.Text;
 using System.Runtime.Intrinsics;
 using WebApi.Models;
 using WebApi.Models.DTOs;
@@ -15,25 +17,39 @@ namespace WebApi.Services
     public class StocksService : IStocksService
     {
         private readonly IStocksRepository _stocksRepository;
+        private readonly IHttpClientFactory _httpClientFactory;
         private readonly string _v1 = null!;
         private readonly string _v2 = null!;
         private readonly string _v3 = null!;
         private readonly string _apiKey = null!;
 
-        public StocksService(IConfiguration configuration, IStocksRepository stocksRepository)
+        public StocksService(IConfiguration configuration, IStocksRepository stocksRepository, IHttpClientFactory httpClientFactory)
         {
             _v1 = configuration["PolygonAPI:Url1"] ?? throw new NullReferenceException();
             _v2 = configuration["PolygonAPI:Url2"] ?? throw new NullReferenceException();
             _v3 = configuration["PolygonAPI:Url3"] ?? throw new NullReferenceException();
             _apiKey = configuration["PolygonAPI:Default"] ?? throw new NullReferenceException();
             _stocksRepository = stocksRepository;
+            _httpClientFactory = httpClientFactory;
+        }
+
+        private async Task<string?> GetImage(string? Url)
+        {
+            if (Url == null)
+                return null;
+            using var client = _httpClientFactory.CreateClient();
+            var response = await client.GetAsync(Url+ $"?apiKey={_apiKey}");
+            response.EnsureSuccessStatusCode();
+            var result = Convert.ToBase64String(await response.Content.ReadAsByteArrayAsync());
+            Console.WriteLine(result);
+            return result;
         }
 
         public async Task<TickerDetails?> GetTickersDetailsAsync(string ticker, DateOnly date)
         {
             try
             {
-                using HttpClient client = new();
+                using HttpClient client = _httpClientFactory.CreateClient();
                 //Console.WriteLine(_v3 + $"reference/tickers/{ticker}?date={date.ToString("yyyy-MM-dd")}&apiKey={_apiKey}");
                 var response = await client.GetAsync(_v3 + $"reference/tickers/{ticker}?date={date:yyyy-MM-dd}&apiKey={_apiKey}");
                 response.EnsureSuccessStatusCode();
@@ -52,10 +68,10 @@ namespace WebApi.Services
                     CompositeFigi = result.results.composite_figi,
                     ShareClassFigi = result.results.share_class_figi,
                     PhoneNumber = result.results.phone_number,
-                    Address = result.results.address == null ? null : result.results.address.address1,
-                    City = result.results.address == null ? null : result.results.address.city,
-                    State = result.results.address == null ? null : result.results.address.state,
-                    PostalCode = result.results.address == null ? null : result.results.address.postal_code,
+                    Address = result.results.address?.address1,
+                    City = result.results.address?.city,
+                    State = result.results.address?.state,
+                    PostalCode = result.results.address?.postal_code,
                     Description = result.results.description,
                     SicCode = result.results.sic_code,
                     SicDescription = result.results.sic_description,
@@ -63,8 +79,8 @@ namespace WebApi.Services
                     HomepageUrl = result.results.homepage_url,
                     TotalEmployees = result.results.total_employees,
                     ListDate = result.results.list_date,
-                    LogoUrl = result.results.branding == null ? null : result.results.branding.logo_url,
-                    IconUrl = result.results.branding == null ? null : result.results.branding.icon_url,
+                    LogoUrl = await GetImage(result.results.branding?.logo_url),
+                    IconUrl = await GetImage(result.results.branding?.icon_url),
                     ShareClassSharesOutstanding = result.results.share_class_shares_outstanding,
                     WeightedSharesOutstanding = result.results.weighted_shares_outstanding,
                     RoundLot = result.results.round_lot
@@ -88,7 +104,7 @@ namespace WebApi.Services
         {
             try
             {
-                using HttpClient client = new();
+                using HttpClient client = _httpClientFactory.CreateClient();
                 var response = await client.GetAsync(_v1+ $"open-close/{ticker}/{date:yyyy-MM-dd}?adjusted=false&apiKey={_apiKey}");
                 response.EnsureSuccessStatusCode();
                 var result = JsonConvert.DeserializeObject<OpenCloseDTO>(await response.Content.ReadAsStringAsync());
@@ -122,7 +138,7 @@ namespace WebApi.Services
         {
             try
             {
-                using HttpClient client = new();
+                using HttpClient client = _httpClientFactory.CreateClient();
                 string a = _v2 + $"aggs/ticker/{ticker}/range/{multiplier}/{timespan}/{from:yyyy-MM-dd}/{to:yyyy-MM-dd}?adjusted=false&sort={sort}&limit={limit}&apiKey={_apiKey}";
                 var response = await client.GetAsync(a);
                 response.EnsureSuccessStatusCode();

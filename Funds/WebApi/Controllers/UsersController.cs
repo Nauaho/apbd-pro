@@ -30,7 +30,7 @@ namespace WebApi.Controllers
             var rt = await _usersRepository.CheckUserAsync(rl);
             if (rt is null)
                 return Unauthorized();
-            return Ok(new {RefreshToken = rt.Token, AccesssToken = GenerateJWT() });
+            return Ok(new {RefreshToken = rt.Token, AccessToken = GenerateJWT() });
         }
 
         [HttpPost("register")]
@@ -103,8 +103,7 @@ namespace WebApi.Controllers
                 ShareClassSharesOutstanding = t.ShareClassSharesOutstanding,
                 WeightedSharesOutstanding = t.WeightedSharesOutstanding,
                 RoundLot = t.RoundLot,
-                Ticker = t.Ticker,
-                Similar = t.Similar.Select(s => s.TickerTwo).ToList(),
+                Ticker = t.Ticker
             });
             return Ok(result);
         }
@@ -144,8 +143,7 @@ namespace WebApi.Controllers
                ShareClassSharesOutstanding = t.ShareClassSharesOutstanding,
                WeightedSharesOutstanding = t.WeightedSharesOutstanding,
                RoundLot = t.RoundLot,
-               Ticker = t.Ticker,
-               Similar = t.Similar.Select(s => s.TickerTwo).ToList(),
+               Ticker = t.Ticker
             });
             return Created($"api/{login}/subs/", result);
         }

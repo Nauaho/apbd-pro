@@ -14,6 +14,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<ProContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
+builder.Services.AddHttpClient();
 builder.Services.AddScoped<IStocksService, StocksService>();
 builder.Services.AddScoped<IUsersRepository, UsersRepository>();
 builder.Services.AddSingleton<PasswordHasher<User>>();

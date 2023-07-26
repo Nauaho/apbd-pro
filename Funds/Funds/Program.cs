@@ -1,6 +1,7 @@
 using Funds.Data;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
+using Microsoft.JSInterop;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,8 +9,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 builder.Services.AddHttpClient();
-builder.Services.AddSingleton<IAuthService, AuthService>();
-builder.Services.AddSingleton<IStocksService, StocksService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IStocksService, StocksService>();
+builder.Services.AddScoped<ICookieService, CookieService>();
 
 var app = builder.Build();
 

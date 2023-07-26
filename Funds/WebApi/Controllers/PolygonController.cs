@@ -52,8 +52,7 @@ namespace WebApi.Controllers
                 ShareClassSharesOutstanding = t.ShareClassSharesOutstanding,
                 WeightedSharesOutstanding = t.WeightedSharesOutstanding,
                 RoundLot = t.RoundLot,
-                Ticker = t.Ticker,
-                Similar = t.Similar.Select(s => s.TickerTwo).ToList(),
+                Ticker = t.Ticker
             };
             return Ok(result);
         }
