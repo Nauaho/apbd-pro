@@ -1,0 +1,34 @@
+﻿@inject Funds.Data.ICookieService CookieService
+@inject Funds.Data.IAuthService AuthService
+@inject NavigationManager Navigation
+
+<div id="navigation-div">
+    <ul class="custom-navbar">
+        <li class="navbar-item"><a class="navb-link" href="" @onclick="Dashboard">Home</a></li>
+        <li class="navbar-item"><a class="navb-link" href="" @onclick="Watchlist">Watchlist</a></li>
+        <li class="navbar-item"><a class="navb-link" href="" @onclick="LogOut">Log out</a></li>
+    </ul>
+</div>
+
+@code {
+
+    void Watchlist()
+    {
+        if (AuthService.IsLoggedIn)
+            Navigation.NavigateTo("watchlist");
+    }
+
+    void Dashboard()
+    {
+        if (AuthService.IsLoggedIn)
+            Navigation.NavigateTo("dashboard");
+    }
+
+    private async Task LogOut()
+    {
+        await CookieService.DeleteCookieAsync("login");
+        await CookieService.DeleteCookieAsync("refreshToken");
+        AuthService.LogOut();
+        Navigation.NavigateTo("login");
+    }
+}

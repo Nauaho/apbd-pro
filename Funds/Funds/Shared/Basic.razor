@@ -1,0 +1,20 @@
+﻿@inject NavigationManager Navigation
+
+
+<h1>Join us! </h1>
+<button @onclick="Register">Sign up</button>
+<div>
+    <p>Already have an account? <button @onclick="SignIn">Sign in</button></p>
+</div>
+@code {
+
+    void Register()
+    {
+        Navigation.NavigateTo("register");
+    }
+
+    void SignIn()
+    {
+        Navigation.NavigateTo("login");
+    }
+}

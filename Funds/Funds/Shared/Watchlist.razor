@@ -1,0 +1,44 @@
+﻿@using Funds.Data;
+@using WebApi.Models.DTOs;
+@inject IStocksService StocksService
+@inject IAuthService AuthService
+@inject NavigationManager Navigation
+
+<h3>Watchlist</h3>
+
+<h1>Your watchlist, @AuthService.Login!</h1>
+<table id="watchlist">
+    <thead>
+        <tr>Logo</tr>
+        <tr>Symbol</tr>
+        <tr>Name</tr>
+        <tr>Country</tr>
+    </thead>
+    @foreach (var s in StocksOnWatchlist)
+    {
+        <tr class="row">
+            <td><img class="icon" src="data:image/png;base64 @s.IconUrl"></td>
+            <td>@s.Ticker</td>
+            <td>@s.Locale</td>
+            <td>s.Name</td>
+            <td class="dbc"><button class="deleteButton" @onclick="() => Unsubscribe(s.Ticker)">X</button></td>
+        </tr>
+    }
+</table>
+
+@code {
+
+    IEnumerable<Stock> StocksOnWatchlist = new List<Stock>();
+
+
+    async Task Unsubscribe(string ticker)
+    {
+        await StocksService.Unsubscribe(AuthService.Login, ticker, AuthService.AccessToken);
+        StocksOnWatchlist = StocksOnWatchlist.Where(s => s.Ticker != ticker);
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        StocksOnWatchlist = await StocksService.GetWatchlistAsync(AuthService.Login, AuthService.AccessToken);
+    }
+}

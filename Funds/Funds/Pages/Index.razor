@@ -1,166 +1,42 @@
 ﻿@page "/"
+@page "/{action}"
 @using Funds.Models;
 @using WebApi.Models.DTOs;
 @inject Funds.Data.IAuthService AuthService
 @inject Funds.Data.IStocksService StocksService
 @inject Funds.Data.ICookieService CookieService
+@inject NavigationManager Navigation
 
-<ul class="custom-navbar">
-    <li class="navbar-item"><a class="navb-link" href="" @onclick="Dashboard">Home</a></li>
-    <li class="navbar-item"><a class="navb-link" href="" @onclick="Watchlist">Watchlist</a></li>
-    <li class="navbar-item"><a class="navb-link" href="" @onclick="LogOut">Log out</a></li>
-</ul>
-@if (action == "login" || string.IsNullOrEmpty(action))
+
+@if(string.IsNullOrEmpty(action))
 {
-    <p hidden="@dontShowErrorMessage"> @errorMessage</p>
-    <h3>Login</h3>
-    <label for="login">Login</label>
-    <br>
-    <input type="text" id="login" @bind-value="login" >
-    <br>
-    <label for="password">Password</label>
-    <br>
-    <input type="password" id="password" @bind-value="password">
-    <br>
-    <button @onclick ="LogIn" >Login</button>
-    <button @onclick="Register">Sign up</button>
-}
-@if(action == "register")
-{
-    <div>
-        <div>
-            <p hidden="@dontShowErrorMessage"> @errorMessage</p>
-        </div>
-        <div>
-            <h3>Sign up</h3>
-            <label for="email">Email</label>
-            <br>
-            <input type="email" id="email" @bind-value="email">
-            <br>
-            <label for="login">Login</label>
-            <br>
-            <input type="text" id="login" @bind-value="login">
-            <br>
-            <label for="password">Password</label>
-            <br>
-            <input type="password" id="password" @bind-value="password">
-            <br>
-            <button @onclick="SignUp">Sign up</button>
-        </div>
-        <br>
-        <br>
-        <div>
-            <p>Already have an account? <button @onclick="SignIn">Sign in</button></p>
-        </div>
-    </div>
+    <Basic></Basic>
 }
 
-@if(action == "dashboard")
+@if (action == "login")
 {
-    <h1>Welcome back, @login!</h1>
-    <button @onclick="Watchlist">Watchlist</button>
+    <Login></Login>
+}
+@if (action == "register")
+{
+    <Register></Register>
 }
 
-@if (action == "watchlist")
+@if (action == "dashboard")
 {
-    <h1>Your watchlist, @login!</h1>
-        <table id="watchlist">
-            <thead>
-                <tr>Logo</tr>
-                <tr>Symbol</tr>
-                <tr>Name</tr>
-                <tr>Country</tr>
-            </thead>
-            @foreach (var s in StocksOnWatchlist)
-            {
-            <tr class="row">
-                <td><img class="icon" src="data:image/png;base64 @s.IconUrl"></td>
-                <td>@s.Ticker</td>
-                <td>@s.Locale</td>
-                <td>s.Name</td>
-                <td class="dbc"><button class="deleteButton" @onclick="() => Unsubscribe(s.Ticker)">X</button></td>
-            </tr>
-            }
-        </table>
+    <Dashboard></Dashboard>
+}
+
+@if (action == "watchlist" && AuthService.IsLoggedIn)
+{
+   <Watchlist></Watchlist>
 }
 
 @code {
     [Parameter]
-    public string action { get; set; } = "login";
-    string login = "";
-    string email = "";
-    string password = "";
-    string accessToken = null!;
-    string refreshToken = null!;
-
+    public string action { get; set; } = null!;
     bool dontShowErrorMessage = true;
-    string errorMessage = "Something went wrong";
-    IEnumerable<Stock> StocksOnWatchlist = new List<Stock>();
-
-    async Task LogIn()
-    {
-        var tokens = await AuthService.LoginUser(login, password);
-        if (tokens is null)
-        {
-            ShowError("Incorrect Login or Password");
-            return;
-        }
-        refreshToken = tokens.RefreshToken;
-        accessToken = tokens.AccessToken;
-        await CookieService.CreateCookieAsync("refreshToken", refreshToken, DateTime.Now.AddDays(5));
-        await CookieService.CreateCookieAsync("login", login, DateTime.Now.AddDays(5));
-        action = "dashboard";
-        dontShowErrorMessage = true;
-        StateHasChanged();
-
-    }
-
-    async Task SignUp()
-    {
-        var tokens = await AuthService.RegisterUser(login, password, email == "" ? null : email);
-        if (tokens is null)
-            ShowError("Sorry, the email or login you have submitted are already in use");
-        else
-        {
-            accessToken = tokens.AccessToken;
-            refreshToken = tokens.RefreshToken;
-            await CookieService.CreateCookieAsync("refreshToken", refreshToken, DateTime.Now.AddDays(5));
-            action = "dashboard";
-            dontShowErrorMessage = true;
-        }
-    }
-
-    async Task Unsubscribe(string ticker)
-    {
-        await StocksService.Unsubscribe(login, ticker, accessToken);
-        StocksOnWatchlist = StocksOnWatchlist.Where(s => s.Ticker != ticker);
-    }
-
-    void Register()
-    {
-        action = "register";
-    }
-
-    void SignIn()
-    {
-        action = "login";
-    }
-
-    async Task Watchlist()
-    {
-        if (string.IsNullOrEmpty(accessToken))
-            return;
-        StocksOnWatchlist = await StocksService.GetWatchlistAsync(login, accessToken);
-        action = "watchlist";
-    }
-
-    async Task Dashboard()
-    {
-        if (string.IsNullOrEmpty(accessToken))
-            return;
-        StocksOnWatchlist = await StocksService.GetWatchlistAsync(login, accessToken);
-        action = "dashboard";
-    }
+    string errorMessage = "Something went wrong";    
 
     private void ShowError(string newErrorMessage)
     {
@@ -178,35 +54,19 @@
 
         if (t == null || l == null)
         {
-            action = "login";
-            StateHasChanged();
+            Navigation.NavigateTo("");
             return;
         }
 
-        var tokens = await AuthService.RefreshToken(t);
+        var tokens = await AuthService.RefreshTheToken(l,t);
         if(tokens is null)
         {
-            action = "login";
-            StateHasChanged();
+            Navigation.NavigateTo("login");
             return;
         }
-        login = l;
-        action = "dashboard";
-        accessToken = tokens.AccessToken;
-        refreshToken = tokens.RefreshToken;
-        await CookieService.CreateCookieAsync("login", login, DateTime.Now.AddDays(5));
-        await CookieService.CreateCookieAsync("refreshToken", refreshToken, DateTime.Now.AddDays(5));
-        StateHasChanged();
-    }
-
-    private async Task LogOut()
-    {
-        login = "";
-        accessToken = "";
-        refreshToken = "";
-        await CookieService.DeleteCookieAsync("login");
-        await CookieService.DeleteCookieAsync("refreshToken");
-        action = "login";
-        StateHasChanged();
+        await CookieService.CreateCookieAsync("login", l, DateTime.Now.AddDays(5));
+        await CookieService.CreateCookieAsync("refreshToken", tokens.RefreshToken, DateTime.Now.AddDays(5));
+        if (string.IsNullOrEmpty(action) || action == "login" || action == "register")
+            Navigation.NavigateTo("dashboard");
     }
 }

@@ -2,17 +2,28 @@
 using System.Text;
 using Newtonsoft.Json;
 using WebApi.Models.DTOs;
+using Newtonsoft.Json.Linq;
 
 namespace Funds.Data
 {
     public interface IAuthService
     {
+        public bool IsLoggedIn { get; }
+        public string Login { get; }
+        public string AccessToken { get; }
+        public string RefreshToken { get; }
         Task<TokenSet?> LoginUser(string username, string password);
-        Task<TokenSet?> RefreshToken(string refreshToken);
+        void LogOut();
+        Task<TokenSet?> RefreshTheToken(string username, string refreshToken);
         Task<TokenSet?> RegisterUser(string username, string password, string? email);
     }
     public class AuthService : IAuthService
     {
+        public bool IsLoggedIn { get { return !(RefreshToken == null || Login == null); } }
+        public string Login { get; set; } = null!;
+        public string AccessToken { get; set; } = null!;
+        public string RefreshToken { get; set; } = null!;
+
         private readonly string _apiLink;
         private readonly IHttpClientFactory _httpClientFactory;
         public AuthService(IConfiguration configuration, IHttpClientFactory httpClientFactory)
@@ -38,9 +49,11 @@ namespace Funds.Data
             if (!response.IsSuccessStatusCode) 
                 return null;
             var value = JsonConvert.DeserializeObject<TokenSet>(await response.Content.ReadAsStringAsync() );
-            Console.WriteLine(value);
             if (value is null)
                 return null;
+            Login = username;
+            AccessToken = value.AccessToken;
+            RefreshToken = value.RefreshToken;
             return value;
         }
 
@@ -59,9 +72,14 @@ namespace Funds.Data
                 return null;
 
             var result = JsonConvert.DeserializeObject<TokenSet>( await response.Content.ReadAsStringAsync() );
+            if(result is null)
+                return null;
+            Login = username;
+            AccessToken = result.AccessToken;
+            RefreshToken = result.RefreshToken;
             return result;
         }
-        public async Task<TokenSet?> RefreshToken(string refreshToken)
+        public async Task<TokenSet?> RefreshTheToken(string username, string refreshToken)
         {
             var json = JsonConvert.SerializeObject(new
             {
@@ -73,7 +91,19 @@ namespace Funds.Data
             if (!response.IsSuccessStatusCode)
                 return null;
             var result = JsonConvert.DeserializeObject<TokenSet>(await response.Content.ReadAsStringAsync());
+            if (result is null)
+                return null;
+            Login = username;
+            AccessToken = result.AccessToken;
+            RefreshToken = result.RefreshToken;
             return result;
+        }
+
+        public void LogOut()
+        {
+            AccessToken = null!;
+            RefreshToken = null!;
+            Login = null!;
         }
     }
 }

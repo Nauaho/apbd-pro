@@ -1,0 +1,66 @@
+﻿@using Funds.Data
+@inject IAuthService AuthService
+@inject ICookieService CookieService
+@inject NavigationManager Navigation
+
+<h3>Register</h3>
+
+<div>
+    <div>
+        <p hidden="@dontShowErrorMessage"> @errorMessage</p>
+    </div>
+    <div>
+        <h3>Sign up</h3>
+        <label for="email">Email</label>
+        <br>
+        <input type="email" id="email" @bind-value="email">
+        <br>
+        <label for="login">Login</label>
+        <br>
+        <input type="text" id="login" @bind-value="login">
+        <br>
+        <label for="password">Password</label>
+        <br>
+        <input type="password" id="password" @bind-value="password">
+        <br>
+        <button @onclick="SignUp">Sign up</button>
+    </div>
+    <br>
+    <br>
+    <div>
+        <p>Already have an account? <button @onclick="SignIn">Sign in</button></p>
+    </div>
+</div>
+
+@code {
+    string login = "";
+    string email = "";
+    string password = "";
+    bool dontShowErrorMessage = true;
+    string errorMessage = "Something went wrong";
+
+
+    async Task SignUp()
+    {
+        var tokens = await AuthService.RegisterUser(login, password, email == "" ? null : email);
+        if (tokens is null)
+            ShowError("Sorry, the email or login you have submitted are already in use");
+        else
+        {
+            await CookieService.CreateCookieAsync("refreshToken", tokens.RefreshToken, DateTime.Now.AddDays(5));
+            Navigation.NavigateTo("dashboard"); 
+            dontShowErrorMessage = true;
+        }
+    }
+
+    void SignIn()
+    {
+        Navigation.NavigateTo("login");
+    }
+
+    private void ShowError(string newErrorMessage)
+    {
+        errorMessage = newErrorMessage;
+        dontShowErrorMessage = false;
+    }
+}
