@@ -5,6 +5,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Collections.Generic;
 using System.Diagnostics.Eventing.Reader;
 using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using System.Text;
 using WebApi.Models.DTOs;
 using WebApi.Repositories;
@@ -30,7 +31,7 @@ namespace WebApi.Controllers
             var rt = await _usersRepository.CheckUserAsync(rl);
             if (rt is null)
                 return Unauthorized();
-            return Ok(new {RefreshToken = rt.Token, AccessToken = GenerateJWT() });
+            return Ok(new {RefreshToken = rt.Token, AccessToken = GenerateJWT(rt.Session) });
         }
 
         [HttpPost("register")]
@@ -40,7 +41,7 @@ namespace WebApi.Controllers
             var res = await _usersRepository.AddUserAsync(rl);
             if (res == null)
                 return BadRequest();
-            return Created($"api/users/{res.UserLogin}", new { RefreshToken = res.Token, AccessToken = GenerateJWT() });
+            return Created($"api/users/{res.UserLogin}", new { RefreshToken = res.Token, AccessToken = GenerateJWT(res.Session) });
         }
 
         [HttpPost("refresh/token")]
@@ -48,12 +49,16 @@ namespace WebApi.Controllers
         {
             var res = await _usersRepository.UpdateRefreshTokenAsync(rt.RToken);
             if (res is not null)
-                return Ok(new { RefreshToken = res, AccessToken = GenerateJWT() });
+                return Ok(new { RefreshToken = res.Token, AccessToken = GenerateJWT(res.Session) });
             else { return Unauthorized(); }
         }
 
-        private string? GenerateJWT()
+        private string? GenerateJWT(string session)
         {
+            var claimList = new List<Claim>
+            {
+                new Claim("session", session)
+            }; 
             var key = _configuration["JWT:SecretKey"] ?? throw new NullReferenceException();
             var creds = new SigningCredentials(new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)), SecurityAlgorithms.HmacSha256);
             var token = new JwtSecurityToken
@@ -61,10 +66,25 @@ namespace WebApi.Controllers
                 issuer: _configuration["JWT:Issuer"],
                 audience: _configuration["JWT:Audience"],
                 signingCredentials: creds,
-                expires: DateTime.Now.AddMinutes(5)
-            );
+                expires: DateTime.Now.AddMinutes(5),
+                claims: claimList
+            ) ;
             var jwt = new JwtSecurityTokenHandler().WriteToken(token);
             return jwt;
+        }
+
+        [Authorize]
+        [HttpDelete("logout")]
+        public async Task<IActionResult> Logout(string token)
+        {
+            var aTSession = Request.Headers.Authorization[0]?.Split(' ')[1];
+            if (token == null)
+                return BadRequest();
+            var result = await _usersRepository.LogUserOut(token, aTSession);
+            if (result)
+                return Ok();
+
+            return NotFound();
         }
 
         [Authorize]

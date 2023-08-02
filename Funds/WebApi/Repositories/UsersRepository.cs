@@ -19,7 +19,8 @@ namespace WebApi.Repositories
         public Task<Models.RefreshToken?> CheckUserAsync(RegisterOrLoginRequest rl);
         public Task<bool> DeleteSubscriptionAsync(string login, string symbol);
         public Task<ICollection<TickerDetails>?> GetSubscriptionAsync(string login);
-        public Task<string?> UpdateRefreshTokenAsync(string RefreshToken);
+        Task<bool> LogUserOut(string refreshToken, string? accessToken);
+        public Task<Models.RefreshToken?> UpdateRefreshTokenAsync(string RefreshToken);
     }
     public class UsersRepository : IUsersRepository
     {
@@ -49,20 +50,17 @@ namespace WebApi.Repositories
             return refreshToken;
         }
 
-        public async Task<string?> UpdateRefreshTokenAsync(string RefreshToken)
+        public async Task<Models.RefreshToken?> UpdateRefreshTokenAsync(string RefreshToken)
         {
             var session = GetSession(RefreshToken);
-            Console.WriteLine("Session: "+session);
             if (session is null)
                 return null;
 
             var invalidate = await _context.RefreshToken.FirstOrDefaultAsync(r => r.Session == session);
-            Console.WriteLine("Invalidate: " + invalidate);
             if (invalidate is null)
                 return null;
 
             var refreshToken = await _context.RefreshToken.FirstOrDefaultAsync(r => r.Token == RefreshToken);
-            Console.WriteLine("RT: " + refreshToken);
             if (refreshToken == null) 
             {
                 _context.RefreshToken.Remove(invalidate);
@@ -71,10 +69,9 @@ namespace WebApi.Repositories
             }
 
             refreshToken.Token = GenerateRefreshJWT(refreshToken.UserLogin, refreshToken.Session);
-            Console.WriteLine(refreshToken.Token);
             refreshToken.Expiration = DateTime.Now.AddDays(5);
             await _context.SaveChangesAsync();
-            return refreshToken.Token;
+            return refreshToken;
         }
 
         public async Task<Models.RefreshToken?> CheckUserAsync(RegisterOrLoginRequest rl)
@@ -133,6 +130,20 @@ namespace WebApi.Repositories
             }
         }
 
+        private static string? GetSessionFromAT(string? token)
+        {
+            try
+            {
+                var jwt = new JwtSecurityToken(token);
+                return jwt.Claims.FirstOrDefault(c => c.Type == "session")?.Value;
+
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+
         private static Models.RefreshToken CreateRefreshToken(User user)
         {
             var a = Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
@@ -176,6 +187,24 @@ namespace WebApi.Repositories
             if (a == null) 
                 return false;
             _context.TickerUser.Remove(a);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> LogUserOut(string refreshToken, string? accessToken)
+        {
+            var rSession = GetSession(refreshToken);
+            var aSession = GetSessionFromAT(accessToken);
+            if (rSession == null || aSession == null )
+                return false;
+            if(rSession != aSession)
+                return false;
+            var tokenToRemove = await _context.RefreshToken
+                    .Where(r => r.Session == rSession)
+                    .FirstOrDefaultAsync();
+            if(tokenToRemove == null) 
+                return false;
+            _context.RefreshToken.Remove(tokenToRemove);
             await _context.SaveChangesAsync();
             return true;
         }

@@ -3,6 +3,7 @@ using System.Text;
 using Newtonsoft.Json;
 using WebApi.Models.DTOs;
 using Newtonsoft.Json.Linq;
+using System.Net.Http.Headers;
 
 namespace Funds.Data
 {
@@ -99,8 +100,11 @@ namespace Funds.Data
             return result;
         }
 
-        public void LogOut()
+        public async void LogOut()
         {
+            using HttpClient client = _httpClientFactory.CreateClient();
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AccessToken);
+            using var response = await client.DeleteAsync(_apiLink+ $"/api/users/logout?token={RefreshToken}");
             AccessToken = null!;
             RefreshToken = null!;
             Login = null!;
