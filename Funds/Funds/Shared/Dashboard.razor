@@ -1,9 +1,14 @@
 ﻿@inject Funds.Data.IAuthService AuthService
+@inject Funds.Data.IStocksService StockService
 
 
 <h1>Welcome back, @AuthService.Login!</h1>
-<input placeholder="TODO">
+<input type="text" placeholder="Try smth like AAPL or Apple..." @oninput="(ChangeEventArgs e) => LookThrough(e?.Value?.ToString())">
 
 @code {
 
+    void LookThrough(string? input)
+    {
+        Console.WriteLine(input);
+    }
 }

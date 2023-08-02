@@ -23,8 +23,8 @@
       <tr class="row">
         <td class="column"><img class="icon" src="data:image/png;base64, @s.IconUrl"></td>
         <td class="column">@s.Ticker</td>
+        <td class="column">@s.Name</td>
         <td class="column">@s.Locale</td>
-        <td class="column">s.Name</td>
         <td class="column"><button class="deleteButton" @onclick="() => Unsubscribe(s.Ticker)">X</button></td>
       </tr>
       }
