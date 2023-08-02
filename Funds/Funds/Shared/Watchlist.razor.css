@@ -1,0 +1,31 @@
+﻿#watchlist {
+    font-size: large;
+    width: 50%;
+    text-align: center;
+    position: absolute;
+}
+
+.deleteButton {
+    display: none;
+    background-color: rgb(203, 18, 18);
+    color: white;
+    border: 0px;
+}
+
+.row:hover .deleteButton {
+    display: block;
+    position: relative;
+}
+
+.row{
+    display:table-row;
+}
+
+.column {
+    width: 12.5%;
+}
+
+.icon {
+    width: 50%;
+    height: 50%;
+}

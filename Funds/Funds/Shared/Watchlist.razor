@@ -9,21 +9,26 @@
 <h1>Your watchlist, @AuthService.Login!</h1>
 <table id="watchlist">
     <thead>
-        <tr>Logo</tr>
-        <tr>Symbol</tr>
-        <tr>Name</tr>
-        <tr>Country</tr>
+      <tr>
+        <th>Logo</th>
+        <th>Symbol</th>
+        <th>Name</th>
+        <th>Country</th>
+        <th></th>
+      </tr>
     </thead>
-    @foreach (var s in StocksOnWatchlist)
-    {
-        <tr class="row">
-            <td><img class="icon" src="data:image/png;base64 @s.IconUrl"></td>
-            <td>@s.Ticker</td>
-            <td>@s.Locale</td>
-            <td>s.Name</td>
-            <td class="dbc"><button class="deleteButton" @onclick="() => Unsubscribe(s.Ticker)">X</button></td>
-        </tr>
-    }
+    <tbody>
+      @foreach (var s in StocksOnWatchlist)
+      {
+      <tr class="row">
+        <td class="column"><img class="icon" src="data:image/png;base64, @s.IconUrl"></td>
+        <td class="column">@s.Ticker</td>
+        <td class="column">@s.Locale</td>
+        <td class="column">s.Name</td>
+        <td class="column"><button class="deleteButton" @onclick="() => Unsubscribe(s.Ticker)">X</button></td>
+      </tr>
+      }
+    </tbody>
 </table>
 
 @code {
