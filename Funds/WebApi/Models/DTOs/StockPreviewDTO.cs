@@ -2,17 +2,17 @@
 {
     public class StockPreviewDTO
     {
-        public bool Active { get; set; }
-        public string? Cik { get; set; }
-        public string? Composite_Figi { get; set; }
-        public string? Currency_Name { get; set; }
-        public DateTime Last_Updated_Utc { get; set; }
-        public string? Locale { get; set; }
-        public string? Market { get; set; }
-        public string? Name { get; set; }
-        public string? Primary_Exchange { get; set; }
-        public string? Share_Class_Figi { get; set; }
-        public string? Ticker { get; set; }
-        public string? Type { get; set; }
+        public bool active { get; set; }
+        public string? cik { get; set; }
+        public string? composite_Figi { get; set; }
+        public string? currency_Name { get; set; }
+        public DateTime last_Updated_Utc { get; set; }
+        public string? locale { get; set; }
+        public string? market { get; set; }
+        public string? name { get; set; }
+        public string? primary_Exchange { get; set; }
+        public string? share_Class_Figi { get; set; }
+        public string ticker { get; set; } = null!;
+        public string? type { get; set; }
     }
 }

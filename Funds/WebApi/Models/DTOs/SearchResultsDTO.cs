@@ -2,11 +2,11 @@
 {
     public class SearchResultsDTO
     {
-        public int Count { get; set; }
+        public int count { get; set; }
 
-        public string? Next_Url { get; set; }
-        public string? Request_Id { get; set; }
-        public IEnumerable<StockPreviewDTO> Results { get; set; } = Enumerable.Empty<StockPreviewDTO>();
-        public string? Status { get; set; }
+        public string? next_Url { get; set; }
+        public string? request_Id { get; set; }
+        public IEnumerable<StockPreviewDTO> results { get; set; } = null!;
+        public string? status { get; set; }
     }
 }

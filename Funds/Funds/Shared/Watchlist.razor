@@ -33,10 +33,10 @@
 
 @code {
 
-    IEnumerable<Stock> StocksOnWatchlist = new List<Stock>();
+    private IEnumerable<Stock> StocksOnWatchlist = new List<Stock>();
 
 
-    async Task Unsubscribe(string ticker)
+    private async Task Unsubscribe(string ticker)
     {
         await StocksService.Unsubscribe(AuthService.Login, ticker, AuthService.AccessToken);
         StocksOnWatchlist = StocksOnWatchlist.Where(s => s.Ticker != ticker);

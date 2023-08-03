@@ -35,14 +35,6 @@
 @code {
     [Parameter]
     public string action { get; set; } = null!;
-    bool dontShowErrorMessage = true;
-    string errorMessage = "Something went wrong";    
-
-    private void ShowError(string newErrorMessage)
-    {
-        errorMessage = newErrorMessage;
-        dontShowErrorMessage = false;
-    } 
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {

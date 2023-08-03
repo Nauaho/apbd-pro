@@ -13,7 +13,7 @@ namespace WebApi.Services
     public interface IStocksService
     {
         public Task<IEnumerable<TickerOHLC>?> GetAggregationAsync(string ticker, int multiplier, string timespan, DateOnly from, DateOnly to, string sort, long limit);
-        Task<IEnumerable<object>> GetSearchResultsAsync(string input);
+        Task<IEnumerable<StocksPreview>> GetSearchResultsAsync(string input);
         public Task<TickerDetails?> GetTickersDetailsAsync(string ticker, DateOnly date);
         public Task<TickerOpenClose?> GetTickersOpenCloseAsync(string ticker, DateOnly date);
     }
@@ -175,24 +175,29 @@ namespace WebApi.Services
             }
         }
 
-        public async Task<IEnumerable<object>> GetSearchResultsAsync(string input)
+        public async Task<IEnumerable<StocksPreview>> GetSearchResultsAsync(string input)
         {
             try 
             {
+                input = input.ToUpper();
                 using var client = _httpClientFactory.CreateClient();
-                var response = await client.GetAsync(_v3+$"reference/tickers?ticker.gte={input.ToUpper()}&active=true&apiKey={_apiKey}");
-                if(!response.IsSuccessStatusCode)
-                    return Enumerable.Empty<object>();
+                var response = await client.GetAsync(_v3+$"reference/tickers?ticker.gte={input}&active=true&apiKey={_apiKey}");
+                Console.WriteLine($"{response.StatusCode}");
+                if (!response.IsSuccessStatusCode)
+                    return Enumerable.Empty<StocksPreview>();
                 var result = JsonConvert.DeserializeObject<SearchResultsDTO>(await response.Content.ReadAsStringAsync());
-                return result.Results;
+                Console.WriteLine($"AAAAAAAAAAA: {result.results.Count()}");
+                return _stocksRepository.SearchIcons( result.results);
             }
             catch (HttpRequestException)
             {
-                return await _stocksRepository
+                return await _stocksRepository.SearchAsync(input);
             }
-            catch (Exception)
+            catch (Exception e)
             {
-                return Enumerable.Empty<object>();
+                Console.WriteLine(e.Message);
+                Console.WriteLine(e.StackTrace);
+                return Enumerable.Empty<StocksPreview>();
             }
         }
     }

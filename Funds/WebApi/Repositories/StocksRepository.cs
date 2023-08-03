@@ -1,6 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using System.Diagnostics.Contracts;
 using WebApi.Data;
 using WebApi.Models;
+using WebApi.Models.DTOs;
 
 namespace WebApi.Repositories
 {
@@ -13,6 +15,8 @@ namespace WebApi.Repositories
         public Task<IEnumerable<TickerOHLC>?> GetAggregationAsync(string ticker, int multiplier, string timespan, DateOnly from, DateOnly to);
         public Task<TickerDetails?> GetTickersDetailsAsync(string ticker);
         public Task<TickerOpenClose?> GetTickersOpenCloseAsync(string ticker, DateOnly date);
+        Task<IEnumerable<StocksPreview>> SearchAsync(string? input);
+        IEnumerable<StocksPreview> SearchIcons(IEnumerable<StockPreviewDTO> stocks);
     }
     public class StocksRepository : IStocksRepository
     {
@@ -79,6 +83,34 @@ namespace WebApi.Repositories
                    await _context.TickerOHLC.AddAsync(tickerOHLC);
             
             await _context.SaveChangesAsync();
+        }
+
+        public async Task<IEnumerable<StocksPreview>> SearchAsync(string? input)
+        {
+            if(input == null )
+                return Enumerable.Empty<StocksPreview>();
+            var result = await _context.TickerDetails
+                    .Where(t => t.Ticker.StartsWith(input))
+                    .Select(t=> new StocksPreview
+                    {
+                        Ticker = t.Ticker,
+                        Name = t.Name,
+                        Locale = t.Locale,
+                        IconUrl = t.IconUrl,
+                    }).ToListAsync();
+            return result;
+        }
+
+        public IEnumerable<StocksPreview> SearchIcons(IEnumerable<StockPreviewDTO> stocks)
+        {
+            var result = stocks.Select( s => new StocksPreview
+            {
+                Ticker = s.ticker,
+                Name = s.name,
+                Locale = s.locale,
+                IconUrl = _context.TickerDetails.FirstOrDefault(t => t.Ticker == s.ticker)?.IconUrl
+            });
+            return result;
         }
     }
 }
