@@ -1,4 +1,5 @@
-﻿@inject Funds.Data.IAuthService AuthService
+﻿@using Funds.Models;
+@inject Funds.Data.IAuthService AuthService
 @inject Funds.Data.IStocksService StockService
 
 
@@ -6,9 +7,12 @@
 <input type="text" placeholder="Try smth like AAPL or Apple..." @oninput="(ChangeEventArgs e) => LookThrough(e?.Value?.ToString())">
 
 @code {
+    IEnumerable<StocksPreview> results = new List<StocksPreview>();
 
-    void LookThrough(string? input)
+    async void LookThrough(string? input)
     {
-        Console.WriteLine(input);
+        results = await StockService.SearchAsync(input, AuthService.AccessToken);
+        foreach (StocksPreview s in results)
+            Console.WriteLine(s.Name);
     }
 }

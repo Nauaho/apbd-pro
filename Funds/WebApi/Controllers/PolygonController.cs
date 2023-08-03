@@ -101,5 +101,11 @@ namespace WebApi.Controllers
             return Ok(result);
         }
 
+        [HttpGet("search")]
+        public async Task<IActionResult> Search(string input)
+        {
+            var results = await _stocksService.GetSearchResultsAsync(input);
+            return Ok(results);
+        }
     }
 }

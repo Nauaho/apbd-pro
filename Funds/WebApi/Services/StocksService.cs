@@ -1,5 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc.Routing;
+﻿using Azure;
+using Microsoft.AspNetCore.Mvc.Routing;
 using Newtonsoft.Json;
+using System;
 using System.Buffers.Text;
 using System.Runtime.Intrinsics;
 using WebApi.Models;
@@ -11,6 +13,7 @@ namespace WebApi.Services
     public interface IStocksService
     {
         public Task<IEnumerable<TickerOHLC>?> GetAggregationAsync(string ticker, int multiplier, string timespan, DateOnly from, DateOnly to, string sort, long limit);
+        Task<IEnumerable<object>> GetSearchResultsAsync(string input);
         public Task<TickerDetails?> GetTickersDetailsAsync(string ticker, DateOnly date);
         public Task<TickerOpenClose?> GetTickersOpenCloseAsync(string ticker, DateOnly date);
     }
@@ -53,7 +56,7 @@ namespace WebApi.Services
                 //Console.WriteLine(_v3 + $"reference/tickers/{ticker}?date={date.ToString("yyyy-MM-dd")}&apiKey={_apiKey}");
                 var response = await client.GetAsync(_v3 + $"reference/tickers/{ticker}?date={date:yyyy-MM-dd}&apiKey={_apiKey}");
                 response.EnsureSuccessStatusCode();
-                var result = JsonConvert.DeserializeObject<Response>( await response.Content.ReadAsStringAsync());
+                var result = JsonConvert.DeserializeObject<WebApi.Models.Response>( await response.Content.ReadAsStringAsync());
                 var tickerDetails = new TickerDetails()
                 {
                     Ticker = result.results.ticker,
@@ -169,6 +172,27 @@ namespace WebApi.Services
             {
                 Console.WriteLine($"Error: {e.Message}");
                 return null;
+            }
+        }
+
+        public async Task<IEnumerable<object>> GetSearchResultsAsync(string input)
+        {
+            try 
+            {
+                using var client = _httpClientFactory.CreateClient();
+                var response = await client.GetAsync(_v3+$"reference/tickers?ticker.gte={input.ToUpper()}&active=true&apiKey={_apiKey}");
+                if(!response.IsSuccessStatusCode)
+                    return Enumerable.Empty<object>();
+                var result = JsonConvert.DeserializeObject<SearchResultsDTO>(await response.Content.ReadAsStringAsync());
+                return result.Results;
+            }
+            catch (HttpRequestException)
+            {
+                return await _stocksRepository
+            }
+            catch (Exception)
+            {
+                return Enumerable.Empty<object>();
             }
         }
     }
