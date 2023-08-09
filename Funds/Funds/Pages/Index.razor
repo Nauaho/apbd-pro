@@ -1,6 +1,8 @@
 ﻿@page "/"
 @page "/{action}"
+@page "/{action}/{stock}"
 @using Funds.Models;
+@using Funds.Shared;
 @using WebApi.Models.DTOs;
 @inject Funds.Data.IAuthService AuthService
 @inject Funds.Data.IStocksService StocksService
@@ -25,6 +27,11 @@
 @if (action == "dashboard")
 {
     <Dashboard></Dashboard>
+
+    @if (!string.IsNullOrEmpty(stock))
+    {
+        <StockInfo stock="@stock"></StockInfo>
+    }
 }
 
 @if (action == "watchlist" && AuthService.IsLoggedIn)
@@ -35,6 +42,8 @@
 @code {
     [Parameter]
     public string action { get; set; } = null!;
+    [Parameter]
+    public string stock { get; set; } = null!;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {

@@ -130,9 +130,8 @@ namespace WebApi.Services
             {
                 return await _stocksRepository.GetTickersOpenCloseAsync(ticker, date);
             }
-            catch (NullReferenceException e)
+            catch (NullReferenceException)
             {
-                Console.WriteLine($"Error: {e.Message}");
                 return null;
             }
         }
@@ -146,7 +145,6 @@ namespace WebApi.Services
                 var response = await client.GetAsync(a);
                 response.EnsureSuccessStatusCode();
                 var result = JsonConvert.DeserializeObject<TickerOhlcDTO>(await response.Content.ReadAsStringAsync());
-                Console.WriteLine(result.results.Count());
                 var ohlc = result.results.Select(b =>  new TickerOHLC()
                 {
                     C = b.c,
@@ -168,9 +166,8 @@ namespace WebApi.Services
             {
                 return await _stocksRepository.GetAggregationAsync(ticker, multiplier, timespan, from, to);
             }
-            catch (NullReferenceException e)
+            catch (NullReferenceException)
             {
-                Console.WriteLine($"Error: {e.Message}");
                 return null;
             }
         }
@@ -182,21 +179,17 @@ namespace WebApi.Services
                 input = input.ToUpper();
                 using var client = _httpClientFactory.CreateClient();
                 var response = await client.GetAsync(_v3+$"reference/tickers?ticker.gte={input}&active=true&apiKey={_apiKey}");
-                Console.WriteLine($"{response.StatusCode}");
-                if (!response.IsSuccessStatusCode)
-                    return Enumerable.Empty<StocksPreview>();
+                response.EnsureSuccessStatusCode();
                 var result = JsonConvert.DeserializeObject<SearchResultsDTO>(await response.Content.ReadAsStringAsync());
-                Console.WriteLine($"AAAAAAAAAAA: {result.results.Count()}");
+                await _stocksRepository.AddManyTickerDetailsAsyncIfNotExists(result.results);
                 return _stocksRepository.SearchIcons( result.results);
             }
             catch (HttpRequestException)
             {
                 return await _stocksRepository.SearchAsync(input);
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                Console.WriteLine(e.Message);
-                Console.WriteLine(e.StackTrace);
                 return Enumerable.Empty<StocksPreview>();
             }
         }

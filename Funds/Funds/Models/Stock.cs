@@ -1,4 +1,4 @@
-﻿namespace WebApi.Models.DTOs
+﻿namespace Funds.Models
 {
     public class Stock
     {

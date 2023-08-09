@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using System.Threading.RateLimiting;
 using WebApi.Data;
 using WebApi.Models;
 using WebApi.Repositories;
@@ -12,6 +14,26 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = 404;
+    //options.AddTokenBucketLimiter("Token", options =>
+    //{
+    //    options.TokenLimit = 50;
+    //    options.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+    //    options.AutoReplenishment = true;
+    //    options.ReplenishmentPeriod = TimeSpan.FromSeconds(10);
+    //    options.TokensPerPeriod = 10;
+    //    options.QueueLimit = 10;
+    //});
+    options.AddFixedWindowLimiter("fixed", options =>
+    {
+        options.Window = TimeSpan.FromMinutes(1);
+        options.PermitLimit = 60;
+        options.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        options.QueueLimit = 5;
+    });
+});
 builder.Services.AddDbContext<ProContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
 builder.Services.AddHttpClient();
@@ -53,7 +75,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseAuthorization();
-
+app.UseRateLimiter();
 app.MapControllers();
 
 app.Run();

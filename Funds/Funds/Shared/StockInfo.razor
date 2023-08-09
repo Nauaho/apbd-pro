@@ -1,0 +1,27 @@
+﻿@inject Funds.Data.IStocksService StocksService
+@inject Funds.Data.IAuthService AuthService
+@inject NavigationManager Navigation
+@using Funds.Models
+
+<h3>@Stock?.Name (@Stock?.Ticker)</h3>
+
+<img class="icon" src="data:image/svg;base64, @Stock?.LogoUrl">
+
+<p>Country: @Stock?.Locale</p>
+@code {
+    [Parameter]
+    public string stock { get; set; } = null!;
+
+    private Stock Stock = null!;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var result =  await StocksService.GetStockInfoAsync(stock, AuthService.AccessToken);
+        if(result is null)
+        {
+            Navigation.NavigateTo("dashboard");
+            return;
+        } 
+        Stock = result;
+    }
+}

@@ -1,18 +1,76 @@
 ﻿@using Funds.Models;
 @inject Funds.Data.IAuthService AuthService
 @inject Funds.Data.IStocksService StockService
+@inject NavigationManager Navigation
 
 
 <h1>Welcome back, @AuthService.Login!</h1>
-<input type="text" placeholder="Try smth like AAPL or Apple..." @oninput="(ChangeEventArgs e) => LookThrough(e?.Value?.ToString())">
+<input 
+    size="search"
+    type="text" 
+    placeholder="Try smth like AAPL or Apple..." 
+    @bind-value="Input" 
+    @bind-value:event="oninput">
+<div clas="autocomplete">
+    @foreach(StocksPreview s in results)
+    {
+        <div class="autocomplete-items" @onclick="() => AutoComplete(s)">
+            <strong>@s.Ticker.Substring(0, Input.Length)</strong>@s.Ticker.Substring(Input.Length)
+        </div>
+    }
+</div>
 
 @code {
-    IEnumerable<StocksPreview> results = new List<StocksPreview>();
+    private IEnumerable<StocksPreview> results = new List<StocksPreview>();
+    private string input = null!;
+    private System.Timers.Timer timer = default!;
 
-    async void LookThrough(string? input)
+    public string Input 
+    { 
+        get => input;
+        set 
+        {
+            if (input == value)
+                return;
+            input = value;
+            DisposeTimer();
+            timer = new System.Timers.Timer(300);
+            timer.Elapsed += ElapsedSearch;
+            timer.Enabled = true;
+            timer.Start();
+        }
+    }
+
+    private void DisposeTimer()
     {
+        if (timer is null)
+            return;
+        timer.Enabled = false;
+        timer.Dispose();
+        timer = null!;
+    }
+
+    private async void ElapsedSearch(object? sender, EventArgs e)
+    {
+        DisposeTimer();
+        await LookThrough(input);
+    }
+
+    private void AutoComplete(StocksPreview s)
+    {
+        input = s.Ticker;
+        results = Enumerable.Empty<StocksPreview>();
+        Navigation.NavigateTo($"dashboard/{s.Ticker}");
+    }
+
+    private async Task LookThrough(string? input)
+    {
+        results = new List<StocksPreview>();
+        await InvokeAsync(StateHasChanged);
+        if (input is null)
+            return;
         results = await StockService.SearchAsync(input, AuthService.AccessToken);
-        foreach (StocksPreview s in results)
-            Console.WriteLine(s.Name);
+        results = results.Where(s => s.Ticker.StartsWith(input.ToUpper()));
+        await InvokeAsync(StateHasChanged);
     }
 }

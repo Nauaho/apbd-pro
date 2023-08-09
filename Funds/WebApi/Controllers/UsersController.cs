@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 using System.Collections.Generic;
 using System.Diagnostics.Eventing.Reader;
@@ -12,6 +13,7 @@ using WebApi.Repositories;
 
 namespace WebApi.Controllers
 {
+    [EnableRateLimiting("fixed")]
     [Route("api/users")]
     [ApiController]
     public class UsersController : Controller

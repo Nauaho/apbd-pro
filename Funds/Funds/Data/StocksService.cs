@@ -2,7 +2,6 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Net.Http.Headers;
-using WebApi.Models.DTOs;
 
 namespace Funds.Data
 {
@@ -10,6 +9,7 @@ namespace Funds.Data
     {
         Task<IEnumerable<Stock>> GetWatchlistAsync(string login, string token);
         Task<IEnumerable<StocksPreview>> SearchAsync(string? input, string token);
+        Task<Stock?> GetStockInfoAsync(string? stock, string token);
         Task Subscribe(string login, string symbol, string token);
         Task Unsubscribe(string login, string symbol, string token);
     }
@@ -49,7 +49,7 @@ namespace Funds.Data
 
         public async Task<IEnumerable<StocksPreview>> SearchAsync(string? input,string token)
         {
-            if (input == null)
+            if (string.IsNullOrEmpty(input))
                 return Enumerable.Empty<StocksPreview>();
             using var client = _httpClientFactory.CreateClient();
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
@@ -57,6 +57,17 @@ namespace Funds.Data
             if (!response.IsSuccessStatusCode)
                 return Enumerable.Empty<StocksPreview>();
             var result = JsonConvert.DeserializeObject<IEnumerable<StocksPreview>>(await response.Content.ReadAsStringAsync());
+            return result;
+        }
+
+        public async Task<Stock?> GetStockInfoAsync(string? stock, string token)
+        {
+            if (string.IsNullOrEmpty(stock))
+                return null;
+            using var client = _httpClientFactory.CreateClient();
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            using var response = await client.GetAsync(_apiLink + $"/api/stocks/{stock}");
+            var result = JsonConvert.DeserializeObject<Stock>(await response.Content.ReadAsStringAsync());
             return result;
         }
     }

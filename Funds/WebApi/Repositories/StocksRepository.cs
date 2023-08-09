@@ -9,6 +9,7 @@ namespace WebApi.Repositories
 
     public interface IStocksRepository
     {
+        Task AddManyTickerDetailsAsyncIfNotExists(IEnumerable<StockPreviewDTO> searchResults);
         public Task AddTickerDetailsAsync(TickerDetails tickerDetails);
         public Task AddTickerOHLCAsync(IEnumerable<TickerOHLC> tickerOhlc);
         public Task AddTickerOpenCloseAsync(TickerOpenClose tickerOpenClose);
@@ -63,6 +64,29 @@ namespace WebApi.Repositories
                 _context.TickerDetails.Update(tickerDetails);
             else
                 await _context.TickerDetails.AddAsync(tickerDetails);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task AddManyTickerDetailsAsyncIfNotExists(IEnumerable<StockPreviewDTO> searchResults)
+        {
+            var newTickers = searchResults
+                        .Where( t => !_context.TickerDetails.ToList().Any(t1 => t1.Ticker == t.ticker))
+                        .Select(t => new TickerDetails
+                        {
+                            Active = t.active,
+                            Cik = t.cik,
+                            CompositeFigi = t.composite_Figi,
+                            CurrencyName = t.currency_Name,
+                            Locale = t.locale,
+                            Market = t.market,
+                            Name = t.name,
+                            PrimaryExchange = t.primary_Exchange,
+                            ShareClassFigi = t.share_Class_Figi,
+                            Ticker = t.ticker,
+                            Type = t.type,
+
+                        });
+            await _context.AddRangeAsync(newTickers);
             await _context.SaveChangesAsync();
         }
 

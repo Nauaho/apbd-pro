@@ -1,11 +1,13 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using WebApi.Models.DTOs;
 using WebApi.Services;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace WebApi.Controllers
 {
+    [EnableRateLimiting("fixed")]
     [Route("api/stocks/")]
     [ApiController]
     [Authorize]
