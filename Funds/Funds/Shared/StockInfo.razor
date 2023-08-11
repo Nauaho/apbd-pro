@@ -2,16 +2,51 @@
 @inject Funds.Data.IAuthService AuthService
 @inject NavigationManager Navigation
 @using Funds.Models
+@if(Stock is null && informationRetrieved)
+{
+    <h2>Sorry, we couldn't find stock called "@stock"</h2>
+}
 
-<h3>@Stock?.Name (@Stock?.Ticker)</h3>
+@if (Stock is not null && informationRetrieved)
+{
 
-<img class="icon" src="data:image/svg;base64, @Stock?.LogoUrl">
+    <div class="main">
+        <img class="logo" src="data:image/svg+xml;base64, @Stock.LogoUrl">
+        <div class="info">
+            <div class="name-and-add-button">
+                <div class="name">
+                    <h3>@Stock.Name (@Stock.Ticker)</h3>
+                </div>
+                <div class="add-button">
+                    <button>Add Or don't </button>
+                </div>
+            </div>
+            <div class="meddle-info">
+                <div class="smaller-info">
+                    <div class="country-and-hompage">
+                        <div class="country">
+                            <h4>County: @Stock.Locale</h4>
+                        </div>
+                        <div class="homepage">
+                            <h4><a href="@Stock.HomepageUrl">Read more...</a></h4>
+                        </div>  
+                    </div>
+                </div>
+                <div class="description">
+                    @Stock.Description
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <p>Country: @Stock.Locale</p>
+}
 
-<p>Country: @Stock?.Locale</p>
 @code {
     [Parameter]
     public string stock { get; set; } = null!;
 
+    private bool informationRetrieved = false;
     private Stock Stock = null!;
 
     protected override async Task OnParametersSetAsync()
@@ -23,5 +58,7 @@
             return;
         } 
         Stock = result;
+        informationRetrieved = true;
+        StateHasChanged();
     }
 }

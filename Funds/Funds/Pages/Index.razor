@@ -1,6 +1,7 @@
 ﻿@page "/"
 @page "/{action}"
-@page "/{action}/{stock}"
+@page "/{action}/{stockOrSearch}"
+@page "/{action}/{stockOrSearch}/{input}"
 @using Funds.Models;
 @using Funds.Shared;
 @using WebApi.Models.DTOs;
@@ -28,9 +29,13 @@
 {
     <Dashboard></Dashboard>
 
-    @if (!string.IsNullOrEmpty(stock))
+    @if (stockOrSearch == "search")
     {
-        <StockInfo stock="@stock"></StockInfo>
+        <h3>I am searching</h3>
+    }
+    else if (!string.IsNullOrEmpty(stockOrSearch))
+    {
+        <StockInfo stock="@stockOrSearch"></StockInfo>
     }
 }
 
@@ -43,7 +48,9 @@
     [Parameter]
     public string action { get; set; } = null!;
     [Parameter]
-    public string stock { get; set; } = null!;
+    public string stockOrSearch { get; set; } = null!;
+    [Parameter]
+    public string input { get; set; } = null!;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {

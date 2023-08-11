@@ -5,12 +5,15 @@
 
 
 <h1>Welcome back, @AuthService.Login!</h1>
-<input 
-    size="search"
-    type="text" 
-    placeholder="Try smth like AAPL or Apple..." 
-    @bind-value="Input" 
-    @bind-value:event="oninput">
+<div class="search-bar">
+    <input 
+        size="search"
+        type="text" 
+        placeholder="Try smth like AAPL or Apple..." 
+        @bind-value="Input" 
+        @bind-value:event="oninput">
+    <button>Search</button>
+</div>
 <div clas="autocomplete">
     @foreach(StocksPreview s in results)
     {
@@ -61,6 +64,11 @@
         input = s.Ticker;
         results = Enumerable.Empty<StocksPreview>();
         Navigation.NavigateTo($"dashboard/{s.Ticker}");
+    }
+
+    private void Search()
+    {
+        Navigation.NavigateTo($"dashboard/search/{Input}");
     }
 
     private async Task LookThrough(string? input)
