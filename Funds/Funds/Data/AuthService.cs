@@ -13,10 +13,10 @@ namespace Funds.Data
         public string Login { get; }
         public string AccessToken { get; }
         public string RefreshToken { get; }
-        Task<TokenSet?> LoginUser(string username, string password);
-        void LogOut();
-        Task<TokenSet?> RefreshTheToken(string username, string refreshToken);
-        Task<TokenSet?> RegisterUser(string username, string password, string? email);
+        public Task<TokenSet?> LoginUser(string username, string password);
+        public Task<bool> LogOut();
+        public Task<TokenSet?> RefreshTheToken(string username, string refreshToken);
+        public Task<TokenSet?> RegisterUser(string username, string password, string? email);
     }
     public class AuthService : IAuthService
     {
@@ -37,77 +37,112 @@ namespace Funds.Data
 
         public async Task<TokenSet?> LoginUser(string username, string password)
         {
-
-            var json = JsonConvert.SerializeObject(new
+            try
+            {
+                var json = JsonConvert.SerializeObject(new
                 {
                     Email = (string?)null,
                     Login = username,
                     Password = password
                 });
-            using HttpClient client = _httpClientFactory.CreateClient();
-            using StringContent content = new(json, Encoding.UTF8, "application/json");
-            using var response = await client.PostAsync(_apiLink+ "/api/users/login", content);
-            if (!response.IsSuccessStatusCode) 
+                using HttpClient client = _httpClientFactory.CreateClient();
+                using StringContent content = new(json, Encoding.UTF8, "application/json");
+                using var response = await client.PostAsync(_apiLink + "/api/users/login", content);
+                if (!response.IsSuccessStatusCode)
+                    return null;
+                var value = JsonConvert.DeserializeObject<TokenSet>(await response.Content.ReadAsStringAsync());
+                if (value is null)
+                    return null;
+                Login = username;
+                AccessToken = value.AccessToken;
+                RefreshToken = value.RefreshToken;
+                return value;
+            }
+            catch (Exception)
+            {
                 return null;
-            var value = JsonConvert.DeserializeObject<TokenSet>(await response.Content.ReadAsStringAsync() );
-            if (value is null)
-                return null;
-            Login = username;
-            AccessToken = value.AccessToken;
-            RefreshToken = value.RefreshToken;
-            return value;
+            }
         }
 
         public async Task<TokenSet?> RegisterUser(string username, string password, string? email)
         {
-            var json = JsonConvert.SerializeObject(new
-            {
-                Email = email,
-                Login = username,
-                Password = password
-            });
-            using HttpClient client = _httpClientFactory.CreateClient();
-            using StringContent content = new(json, Encoding.UTF8, "application/json");
-            using var response = await client.PostAsync(_apiLink + "/api/users/register", content);
-            if (!response.IsSuccessStatusCode)
-                return null;
+            try 
+            { 
+                var json = JsonConvert.SerializeObject(new
+                {
+                    Email = email,
+                    Login = username,
+                    Password = password
+                });
+                using HttpClient client = _httpClientFactory.CreateClient();
+                using StringContent content = new(json, Encoding.UTF8, "application/json");
+                using var response = await client.PostAsync(_apiLink + "/api/users/register", content);
+                if (!response.IsSuccessStatusCode)
+                    return null;
 
-            var result = JsonConvert.DeserializeObject<TokenSet>( await response.Content.ReadAsStringAsync() );
-            if(result is null)
+                var result = JsonConvert.DeserializeObject<TokenSet>( await response.Content.ReadAsStringAsync() );
+                if(result is null)
+                    return null;
+                Login = username;
+                AccessToken = result.AccessToken;
+                RefreshToken = result.RefreshToken;
+                return result;
+            }
+            catch (Exception)
+            {
                 return null;
-            Login = username;
-            AccessToken = result.AccessToken;
-            RefreshToken = result.RefreshToken;
-            return result;
-        }
+            }
+}
         public async Task<TokenSet?> RefreshTheToken(string username, string refreshToken)
         {
-            var json = JsonConvert.SerializeObject(new
+            try
             {
-                rToken = refreshToken
-            });
-            using HttpClient client = _httpClientFactory.CreateClient();
-            using StringContent content = new(json, Encoding.UTF8, "application/json");
-            using var response = await client.PostAsync(_apiLink + "/api/users/refresh/token", content);
-            if (!response.IsSuccessStatusCode)
+                var json = JsonConvert.SerializeObject(new
+                {
+                    rToken = refreshToken
+                });
+                using HttpClient client = _httpClientFactory.CreateClient();
+                using StringContent content = new(json, Encoding.UTF8, "application/json");
+                using var response = await client.PostAsync(_apiLink + "/api/users/refresh/token", content);
+                if (!response.IsSuccessStatusCode)
+                    return null;
+                var result = JsonConvert.DeserializeObject<TokenSet>(await response.Content.ReadAsStringAsync());
+                if (result is null)
+                    return null;
+                Login = username;
+                AccessToken = result.AccessToken;
+                RefreshToken = result.RefreshToken;
+                return result;
+            }
+            catch (Exception) 
+            {
+                Login = null!;
+                AccessToken = null!;
+                RefreshToken = null!;
                 return null;
-            var result = JsonConvert.DeserializeObject<TokenSet>(await response.Content.ReadAsStringAsync());
-            if (result is null)
-                return null;
-            Login = username;
-            AccessToken = result.AccessToken;
-            RefreshToken = result.RefreshToken;
-            return result;
+            }
         }
 
-        public async void LogOut()
+        public async Task<bool> LogOut()
         {
-            using HttpClient client = _httpClientFactory.CreateClient();
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AccessToken);
-            using var response = await client.DeleteAsync(_apiLink+ $"/api/users/logout?token={RefreshToken}");
-            AccessToken = null!;
-            RefreshToken = null!;
-            Login = null!;
+            try
+            {
+
+                using HttpClient client = _httpClientFactory.CreateClient();
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AccessToken);
+                using var response = await client.DeleteAsync(_apiLink + $"/api/users/logout?token={RefreshToken}");
+                AccessToken = null!;
+                RefreshToken = null!;
+                Login = null!;
+                return true;
+            }
+            catch (Exception) 
+            {
+                AccessToken = null!;
+                RefreshToken = null!;
+                Login = null!;
+                return false;
+            }
         }
     }
 }

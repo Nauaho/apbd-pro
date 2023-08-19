@@ -1,7 +1,12 @@
-﻿body {
-    padding: 10px;
+﻿.main {
+    padding-top: 5%;
 }
 
 .logo{
     width: 10%;
 }
+
+/*.image-of-logo {
+    background-color: black;
+    fill: black;
+}*/

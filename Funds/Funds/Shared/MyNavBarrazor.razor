@@ -4,31 +4,42 @@
 
 <div id="navigation-div">
     <ul class="custom-navbar">
-        <li class="navbar-item"><a class="navb-link" href="" @onclick="Dashboard">Home</a></li>
-        <li class="navbar-item"><a class="navb-link" href="" @onclick="Watchlist">Watchlist</a></li>
+        <li id="dashboard" class="@dashboardStyleButtonClass"><a class="navb-link" href="" @onclick="Dashboard">Home</a></li>
+        <li id="watchlist" class="@watchlistStyleButtonClass"><a class="navb-link" href="" @onclick="Watchlist">Watchlist</a></li>
         <li class="navbar-item"><a class="navb-link" href="" @onclick="LogOut">Log out</a></li>
     </ul>
 </div>
 
 @code {
+    private string dashboardStyleButtonClass = "navbar-item";
+    private string watchlistStyleButtonClass = "navbar-item";
 
     void Watchlist()
     {
-        if (AuthService.IsLoggedIn)
-            Navigation.NavigateTo("watchlist");
+        if (!AuthService.IsLoggedIn)
+            return;
+        Navigation.NavigateTo("watchlist");
+        dashboardStyleButtonClass = "navbar-item";
+        watchlistStyleButtonClass = "navbar-item-active";
     }
 
     void Dashboard()
     {
-        if (AuthService.IsLoggedIn)
-            Navigation.NavigateTo("dashboard");
+        if (!AuthService.IsLoggedIn)
+            return;
+        Navigation.NavigateTo("dashboard");
+        watchlistStyleButtonClass = "navbar-item";
+        dashboardStyleButtonClass = "navbar-item-active";
     }
 
     private async Task LogOut()
     {
+        if (! await AuthService.LogOut())
+            return;
         await CookieService.DeleteCookieAsync("login");
         await CookieService.DeleteCookieAsync("refreshToken");
-        AuthService.LogOut();
+        dashboardStyleButtonClass = "navbar-item";
+        watchlistStyleButtonClass = "navbar-item";
         Navigation.NavigateTo("login");
     }
 }

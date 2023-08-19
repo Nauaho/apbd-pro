@@ -11,17 +11,29 @@
 {
 
     <div class="main">
-        <img class="logo" src="data:image/svg+xml;base64, @Stock.LogoUrl">
+        @if(Stock.LogoUrl is not null)
+        {
+            <div class="image-of-logo">
+                <img class="logo" src="data:image/svg+xml;base64, @Stock.LogoUrl">
+            </div>
+        }
         <div class="info">
             <div class="name-and-add-button">
                 <div class="name">
                     <h3>@Stock.Name (@Stock.Ticker)</h3>
                 </div>
                 <div class="add-button">
-                    <button>Add Or don't </button>
+                    @if (!Watchlist.Any(s => s.Ticker == Stock.Ticker))
+                    {
+                        <button @onclick="() => Subscribe(stock)">Add</button>
+                    }
+                    else
+                    {
+                        <button @onclick="() => Unsubscribe(stock)">Remove</button>
+                    }
                 </div>
             </div>
-            <div class="meddle-info">
+            <div class="middle-info">
                 <div class="smaller-info">
                     <div class="country-and-hompage">
                         <div class="country">
@@ -37,28 +49,44 @@
                 </div>
             </div>
         </div>
+        <div id="stock-chart"></div>
     </div>
-    
-    <p>Country: @Stock.Locale</p>
 }
 
 @code {
     [Parameter]
     public string stock { get; set; } = null!;
-
+    public IEnumerable<Stock> Watchlist { get; set; } = new List<Stock>();
     private bool informationRetrieved = false;
     private Stock Stock = null!;
 
     protected override async Task OnParametersSetAsync()
     {
-        var result =  await StocksService.GetStockInfoAsync(stock, AuthService.AccessToken);
+        var result =  await StocksService.GetStockInfoAsync(stock);
         if(result is null)
         {
             Navigation.NavigateTo("dashboard");
             return;
-        } 
+        }
+        Watchlist = await StocksService.GetWatchlistAsync();
         Stock = result;
         informationRetrieved = true;
+        StateHasChanged();
+    }
+
+    private async Task Unsubscribe(string ticker)
+    {
+        await StocksService.Unsubscribe(ticker);
+        Watchlist = Watchlist.Where(s => s.Ticker != ticker);
+        Console.WriteLine();
+        StateHasChanged();
+    }
+
+    private async Task Subscribe(string ticker)
+    {
+        await StocksService.Subscribe(ticker);
+        Watchlist = Watchlist.Append(Stock);
+        Console.WriteLine(Watchlist.Any(s => s.Ticker == Stock.Ticker));
         StateHasChanged();
     }
 }

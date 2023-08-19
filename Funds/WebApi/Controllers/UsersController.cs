@@ -13,7 +13,6 @@ using WebApi.Repositories;
 
 namespace WebApi.Controllers
 {
-    [EnableRateLimiting("fixed")]
     [Route("api/users")]
     [ApiController]
     public class UsersController : Controller

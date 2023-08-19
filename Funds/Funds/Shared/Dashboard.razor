@@ -5,29 +5,35 @@
 
 
 <h1>Welcome back, @AuthService.Login!</h1>
-<div class="search-bar">
-    <input 
-        size="search"
-        type="text" 
-        placeholder="Try smth like AAPL or Apple..." 
-        @bind-value="Input" 
-        @bind-value:event="oninput">
-    <button>Search</button>
-</div>
-<div clas="autocomplete">
-    @foreach(StocksPreview s in results)
+<div class="autocomplete">
+    <div class="search-bar">
+        <input 
+            size="search"
+            type="text" 
+            placeholder="Try smth like AAPL or Apple..." 
+            @bind-value="Input" 
+            @bind-value:event="oninput">
+        <button class="look-button">Search</button>
+    </div>
+    @if (results.Count() != 0)
     {
-        <div class="autocomplete-items" @onclick="() => AutoComplete(s)">
-            <strong>@s.Ticker.Substring(0, Input.Length)</strong>@s.Ticker.Substring(Input.Length)
+        <div class="autocomplete-items">
+            @foreach (StocksPreview s in results)
+            {
+                <div @onclick="() => AutoComplete(s)">
+                    <strong>@s.Ticker.Substring(0, oldInput.Length)</strong>@s.Ticker.Substring(oldInput.Length)
+                </div>
+            }
         </div>
     }
+    
 </div>
 
 @code {
     private IEnumerable<StocksPreview> results = new List<StocksPreview>();
     private string input = null!;
     private System.Timers.Timer timer = default!;
-
+    private string oldInput = null!;
     public string Input 
     { 
         get => input;
@@ -35,6 +41,7 @@
         {
             if (input == value)
                 return;
+            results = new List<StocksPreview>();
             input = value;
             DisposeTimer();
             timer = new System.Timers.Timer(300);
@@ -77,8 +84,9 @@
         await InvokeAsync(StateHasChanged);
         if (input is null)
             return;
-        results = await StockService.SearchAsync(input, AuthService.AccessToken);
+        results = await StockService.SearchAsync(input);
         results = results.Where(s => s.Ticker.StartsWith(input.ToUpper()));
+        oldInput = input;
         await InvokeAsync(StateHasChanged);
     }
 }

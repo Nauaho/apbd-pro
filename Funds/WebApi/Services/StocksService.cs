@@ -12,8 +12,8 @@ namespace WebApi.Services
 {
     public interface IStocksService
     {
-        public Task<IEnumerable<TickerOHLC>?> GetAggregationAsync(string ticker, int multiplier, string timespan, DateOnly from, DateOnly to, string sort, long limit);
-        Task<IEnumerable<StocksPreview>> GetSearchResultsAsync(string input);
+        public Task<IEnumerable<TickerOHLC>?> GetAggregationAsync(string ticker, int multiplier, string timespan);
+        public Task<IEnumerable<StocksPreview>> GetSearchResultsAsync(string input);
         public Task<TickerDetails?> GetTickersDetailsAsync(string ticker, DateOnly date);
         public Task<TickerOpenClose?> GetTickersOpenCloseAsync(string ticker, DateOnly date);
     }
@@ -136,38 +136,55 @@ namespace WebApi.Services
             }
         }
 
-        public async Task<IEnumerable<TickerOHLC>?> GetAggregationAsync(string ticker, int multiplier, string timespan, DateOnly from, DateOnly to, string sort, long limit)
+        public async Task<IEnumerable<TickerOHLC>?> GetAggregationAsync(string ticker, int multiplier, string timespan)
         {
+            List<TickerOHLC> ohlc = new();
             try
             {
-                using HttpClient client = _httpClientFactory.CreateClient();
-                string a = _v2 + $"aggs/ticker/{ticker}/range/{multiplier}/{timespan}/{from:yyyy-MM-dd}/{to:yyyy-MM-dd}?adjusted=false&sort={sort}&limit={limit}&apiKey={_apiKey}";
-                var response = await client.GetAsync(a);
-                response.EnsureSuccessStatusCode();
-                var result = JsonConvert.DeserializeObject<TickerOhlcDTO>(await response.Content.ReadAsStringAsync());
-                var ohlc = result.results.Select(b =>  new TickerOHLC()
+                var a = await _stocksRepository
+                    .GetAggregationAsync(ticker,
+                                         multiplier,
+                                         timespan
+                                         );
+                string nextUrl = _v2 + $"aggs/ticker/{ticker}/range/{multiplier}/{timespan}/{DateTime.Now.AddYears(-1):yyyy-MM-dd}/{DateTime.Now.Date:yyyy-MM-dd}?adjusted=false&sort=asc&limit=50000&apiKey={_apiKey}";
+                if (a is not null)
+                    ohlc = ohlc.Union(a).ToList();
+                do
                 {
-                    C = b.c,
-                    H = b.h,
-                    L = b.l,
-                    N = b.n,
-                    O = b.o,
-                    T = b.t,
-                    V = b.v,
-                    Vw = b.vw,
-                    Multuplier = multiplier,
-                    Timespan = timespan,
-                    Symbol = result.ticker
-                });
-                await _stocksRepository.AddTickerOHLCAsync(ohlc);
+                    using HttpClient client = _httpClientFactory.CreateClient();
+                    var response = await client.GetAsync(nextUrl);
+                    response.EnsureSuccessStatusCode();
+                    var result = JsonConvert.DeserializeObject<TickerOhlcDTO>(await response.Content.ReadAsStringAsync());
+                    nextUrl = result.next_url;
+                    ohlc.AddRange(result.results.Select(b => new TickerOHLC()
+                    {
+                        C = b.c,
+                        H = b.h,
+                        L = b.l,
+                        N = b.n,
+                        O = b.o,
+                        T = b.t,
+                        V = b.v,
+                        Vw = b.vw,
+                        Multuplier = multiplier,
+                        Timespan = timespan,
+                        Symbol = result.ticker
+                    }));
+                    await _stocksRepository.AddTickerOHLCAsync(ohlc);
+                }
+                while (nextUrl is not null);
                 return ohlc;
             }
-            catch (HttpRequestException)
+            catch (HttpRequestException e)
             {
-                return await _stocksRepository.GetAggregationAsync(ticker, multiplier, timespan, from, to);
+                Console.WriteLine(e.Message);
+                Console.WriteLine(e.StackTrace);
+                return ohlc;
             }
-            catch (NullReferenceException)
+            catch (Exception e)
             {
+                Console.WriteLine(e.Message);
+                Console.WriteLine(e.StackTrace);
                 return null;
             }
         }

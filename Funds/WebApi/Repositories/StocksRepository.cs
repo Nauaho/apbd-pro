@@ -13,7 +13,7 @@ namespace WebApi.Repositories
         public Task AddTickerDetailsAsync(TickerDetails tickerDetails);
         public Task AddTickerOHLCAsync(IEnumerable<TickerOHLC> tickerOhlc);
         public Task AddTickerOpenCloseAsync(TickerOpenClose tickerOpenClose);
-        public Task<IEnumerable<TickerOHLC>?> GetAggregationAsync(string ticker, int multiplier, string timespan, DateOnly from, DateOnly to);
+        public Task<IEnumerable<TickerOHLC>?> GetAggregationAsync(string ticker, int multiplier, string timespan);
         public Task<TickerDetails?> GetTickersDetailsAsync(string ticker);
         public Task<TickerOpenClose?> GetTickersOpenCloseAsync(string ticker, DateOnly date);
         Task<IEnumerable<StocksPreview>> SearchAsync(string? input);
@@ -46,12 +46,9 @@ namespace WebApi.Repositories
                 return await a.FirstAsync();
         }
 
-        public async Task<IEnumerable<TickerOHLC>?> GetAggregationAsync(string ticker, int multiplier, string timespan, DateOnly from, DateOnly to)
+        public async Task<IEnumerable<TickerOHLC>?> GetAggregationAsync(string ticker, int multiplier, string timespan)
         {
-            var uTo = new DateTimeOffset(to.ToDateTime(TimeOnly.MinValue)).ToUnixTimeMilliseconds();
-            var uFrom = new DateTimeOffset(from.ToDateTime(TimeOnly.MinValue)).ToUnixTimeMilliseconds();
-
-            var a = await _context.TickerOHLC.Where(t => t.Symbol == ticker && t.Multuplier == multiplier && t.Timespan == timespan && t.T <= uTo && t.T >= uFrom).ToListAsync();
+            var a = await _context.TickerOHLC.Where(t => t.Symbol == ticker && t.Multuplier == multiplier && t.Timespan == timespan).ToListAsync();
             if(a.Count == 0) 
                 return null;
             else
@@ -101,9 +98,7 @@ namespace WebApi.Repositories
         public async Task AddTickerOHLCAsync(IEnumerable<TickerOHLC> tickerOhlc)
         {
             foreach(TickerOHLC tickerOHLC in tickerOhlc)
-                if(await _context.TickerOHLC.ContainsAsync(tickerOHLC))
-                    _context.TickerOHLC.Update(tickerOHLC);
-                else
+                if(! await _context.TickerOHLC.ContainsAsync(tickerOHLC)) 
                    await _context.TickerOHLC.AddAsync(tickerOHLC);
             
             await _context.SaveChangesAsync();

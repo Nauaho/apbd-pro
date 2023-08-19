@@ -7,7 +7,6 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace WebApi.Controllers
 {
-    [EnableRateLimiting("fixed")]
     [Route("api/stocks/")]
     [ApiController]
     [Authorize]
@@ -60,25 +59,23 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("{ticker}/ohlc")]
-        public async Task<IActionResult> GetOHLC(string ticker,int multiplier, string timespan, string from, string to, string sort, long limit)
+        public async Task<IActionResult> GetOHLC(string ticker,int multiplier, string timespan)
         {
-            var ohlc = await _stocksService.GetAggregationAsync(ticker, multiplier, timespan, DateOnly.ParseExact(from, "yyyy-MM-dd"), DateOnly.ParseExact(to, "yyyy-MM-dd"), sort, limit);
+            var ohlc = await _stocksService.GetAggregationAsync(ticker, multiplier, timespan);
+            Console.WriteLine(ohlc?.Any());
             if (ohlc == null || !ohlc.Any())
                 return NotFound();
-            var result = ohlc.Select(o => new OhlcDTO
+            var result = ohlc.Select(o => new object[]
             {
-                C = o.C,
-                H = o.H,
-                L = o.L,
-                N = o.N,
-                O = o.O,
-                V = o.V,
-                Vw = o.Vw,
-                T = o.T,
-                Multuplier = o.Multuplier,
-                Timespan = o.Timespan,
-                Symbol = o.Symbol
-            });
+                o.C,
+                o.H,
+                o.L,
+                o.N,
+                o.O,
+                o.V,
+                o.Vw,
+                o.T
+            }).ToArray();
             return Ok(result);
         }
 
