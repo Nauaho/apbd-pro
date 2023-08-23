@@ -1,13 +1,15 @@
 ﻿@inject Funds.Data.IStocksService StocksService
+@inject Funds.Data.IStockChartService StockChartService
 @inject Funds.Data.IAuthService AuthService
 @inject NavigationManager Navigation
 @using Funds.Models
-@if(Stock is null && informationRetrieved)
+
+@if(Stock is null)
 {
     <h2>Sorry, we couldn't find stock called "@stock"</h2>
 }
 
-@if (Stock is not null && informationRetrieved)
+@if (Stock is not null)
 {
 
     <div class="main">
@@ -49,36 +51,35 @@
                 </div>
             </div>
         </div>
-        <div id="stock-chart"></div>
     </div>
+    <div class="stock-chart"><div id="stock-chart"></div></div>
+    
 }
 
 @code {
     [Parameter]
     public string stock { get; set; } = null!;
     public IEnumerable<Stock> Watchlist { get; set; } = new List<Stock>();
-    private bool informationRetrieved = false;
     private Stock Stock = null!;
 
-    protected override async Task OnParametersSetAsync()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        var result =  await StocksService.GetStockInfoAsync(stock);
-        if(result is null)
+        var result = await StocksService.GetStockInfoAsync(stock);
+        if (result is null)
         {
             Navigation.NavigateTo("dashboard");
             return;
         }
         Watchlist = await StocksService.GetWatchlistAsync();
         Stock = result;
-        informationRetrieved = true;
-        StateHasChanged();
+        await StockChartService.DrawMeChartAsync(stock, "day", "1", "stock-chart");
+        if (firstRender)
+            StateHasChanged();
     }
-
     private async Task Unsubscribe(string ticker)
     {
         await StocksService.Unsubscribe(ticker);
         Watchlist = Watchlist.Where(s => s.Ticker != ticker);
-        Console.WriteLine();
         StateHasChanged();
     }
 
@@ -86,7 +87,6 @@
     {
         await StocksService.Subscribe(ticker);
         Watchlist = Watchlist.Append(Stock);
-        Console.WriteLine(Watchlist.Any(s => s.Ticker == Stock.Ticker));
         StateHasChanged();
     }
 }

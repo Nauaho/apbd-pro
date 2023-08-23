@@ -67,14 +67,11 @@ namespace WebApi.Controllers
                 return NotFound();
             var result = ohlc.Select(o => new object[]
             {
-                o.C,
+                o.T,
+                o.O,
                 o.H,
                 o.L,
-                o.N,
-                o.O,
-                o.V,
-                o.Vw,
-                o.T
+                o.C
             }).ToArray();
             return Ok(result);
         }

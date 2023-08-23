@@ -12,6 +12,7 @@ builder.Services.AddHttpClient();
 builder.Services.AddSingleton<IAuthService, AuthService>();
 builder.Services.AddScoped<IStocksService, StocksService>();
 builder.Services.AddScoped<ICookieService, CookieService>();
+builder.Services.AddScoped<IStockChartService, StockChartService>();
 
 var app = builder.Build();
 
