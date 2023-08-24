@@ -21,8 +21,6 @@ namespace Funds.Data
             Console.WriteLine("Creating Chart");
             var data = await _stocksService.GetStocksOhlcAsync(stock, timespan, multiplyer);
             await _jSRuntime.InvokeVoidAsync("createChart", data, "#"+idOfChartsDiv);
-            
-            //await _jSRuntime.InvokeVoidAsync("eval", "2+2");
         }
     }
 }

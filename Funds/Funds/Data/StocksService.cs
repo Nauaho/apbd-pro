@@ -79,6 +79,7 @@ namespace Funds.Data
             using var client = _httpClientFactory.CreateClient();
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _authService.AccessToken);
             using var response = await client.GetAsync(_apiLink + $"/api/stocks/{stock}/ohlc?multiplier={multiplyer}&timespan={timespan}&from=2023-06-07&to=2023-06-10&sort=asc&limit=3000");
+            Console.WriteLine(response.StatusCode);
             return await response.Content.ReadAsStringAsync();
         }
     }

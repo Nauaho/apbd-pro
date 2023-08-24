@@ -1,6 +1,9 @@
-﻿{
-    var chart;
-    function createChart(prices, idElement) {
+﻿function createChart(prices, idElement) {
+    var chartToDelete = document.getElementById("apexchartstock");
+    if (!(chartToDelete == null && chartToDelete == undefined))
+        chartToDelete.remove();
+    console.log(prices);
+    try {
         prices = JSON.parse(prices);
         var options = {
             series: [{
@@ -8,6 +11,7 @@
             }],
             chart: {
                 type: 'candlestick',
+                id: 'tock'
             },
             xaxis: {
                 type: 'datetime'
@@ -18,9 +22,11 @@
                 }
             }
         };
-        chart = new ApexCharts(document.querySelector(idElement), options);
-        
+        var chart = new ApexCharts(document.getElementById(idElement), options);
+
         chart.render();
         console.log("Chart rendered");
+    } catch (exception) {}
     }
-}
+    
+    
