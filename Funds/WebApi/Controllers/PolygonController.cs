@@ -71,7 +71,7 @@ namespace WebApi.Controllers
                 o.O,
                 o.H,
                 o.L,
-                o.C
+                o.C,
             }).ToArray();
             return Ok(result);
         }

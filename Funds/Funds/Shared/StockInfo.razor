@@ -1,15 +1,21 @@
 ﻿@inject Funds.Data.IStocksService StocksService
-@inject Funds.Data.IStockChartService StockChartService
 @inject Funds.Data.IAuthService AuthService
 @inject NavigationManager Navigation
+@inject Funds.Data.IStockChartService StockChartService
 @using Funds.Models
 
-@if(Stock is null && !stockExists)
+
+@if (Stock is null && !informationRetrieved)
+{
+    <h1>LOADING SCREEN</h1>
+}
+
+@if(Stock is null && informationRetrieved)
 {
     <h2>Sorry, we couldn't find stock called "@stock"</h2>
 }
 
-@if (Stock is not null)
+@if (Stock is not null && informationRetrieved)
 {
     <div class="main">
         @if(Stock.LogoUrl is not null)
@@ -26,11 +32,11 @@
                 <div class="add-button">
                     @if (!Watchlist.Any(s => s.Ticker == Stock.Ticker))
                     {
-                        <button @onclick="() => Subscribe(stock)">Add</button>
+                        <button @onclick="() => Subscribe(Stock)">Add</button>
                     }
                     else
                     {
-                        <button @onclick="() => Unsubscribe(stock)">Remove</button>
+                        <button @onclick="() => Unsubscribe(Stock)">Remove</button>
                     }
                 </div>
             </div>
@@ -50,58 +56,68 @@
                 </div>
             </div>
         </div>
-    </div>
-    <div class="stock-chart-div">
-        <div id="stock-panel">
-            <button @onclick='() => DrawChart( "day", "1")'>1D</button>
-            <button @onclick='() => DrawChart( "day", "3")'>3D</button>
-            <button @onclick='() => DrawChart( "week", "1")'>1W</button>
-            <button @onclick='() => DrawChart( "month", "1")'>1M</button>
-            <button @onclick='() => DrawChart( "month", "3")'>3M</button>
+        <div id="chart">
+            <div id="stock-panel">
+                <button @onclick='() => DrawChart( "day", "1")'>1D</button>
+                <button @onclick='() => DrawChart( "day", "3")'>3D</button>
+                <button @onclick='() => DrawChart( "week", "1")'>1W</button>
+                <button @onclick='() => DrawChart( "month", "1")'>1M</button>
+                <button @onclick='() => DrawChart( "month", "3")'>3M</button>
+            </div>
+            <div id="@chart"></div>
         </div>
-        <div id=@chart></div>
     </div>
-    
 }
 
 @code {
     [Parameter]
     public string stock { get; set; } = null!;
     public IEnumerable<Stock> Watchlist { get; set; } = new List<Stock>();
-    private Stock Stock = null!;
-    private bool firstRetrieve = true;
-    private bool stockExists = true;
+    private bool informationRetrieved = false;
+    private bool firstDraw = true;
+    private Stock? Stock = null!;
     private string chart = "stock-chart";
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnParametersSetAsync()
     {
-        Console.WriteLine("aaaaaaaaaaaaaaaa");
-        var result = await StocksService.GetStockInfoAsync(stock);
-        if (result is null)
-        {
-            stockExists = false;
-            return;
-        }
+        Stock =  await StocksService.GetStockInfoAsync(stock);
         Watchlist = await StocksService.GetWatchlistAsync();
-        Stock = result;
-
+        informationRetrieved = true ;
+        firstDraw = true;
     }
-    private async Task Unsubscribe(string ticker)
+
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        await StocksService.Unsubscribe(ticker);
-        Watchlist = Watchlist.Where(s => s.Ticker != ticker);
+        if (Stock is null)
+            return;
+        if (firstDraw)
+        {
+            await StockChartService.DrawMeChartAsync(Stock.Ticker, "day", "1", chart);
+            firstDraw = false;
+        }
+    }
+
+    private async Task Unsubscribe(Stock stock)
+    {
+        await StocksService.Unsubscribe(stock.Ticker);
+        Watchlist = Watchlist.Where(s => s.Ticker != stock.Ticker);
+        Console.WriteLine();
         StateHasChanged();
     }
 
     private async Task DrawChart( string timespan, string multiplyer)
     {
+        if (Stock is null)
+            return;
         await StockChartService.DrawMeChartAsync(Stock.Ticker, timespan, multiplyer, chart);
     }
 
-    private async Task Subscribe(string ticker)
+    private async Task Subscribe(Stock stock)
     {
-        await StocksService.Subscribe(ticker);
-        Watchlist = Watchlist.Append(Stock);
+        await StocksService.Subscribe(stock.Ticker);
+        Watchlist = Watchlist.Append(stock);
+        Console.WriteLine(Watchlist.Any(s => s.Ticker == stock.Ticker));
         StateHasChanged();
     }
 }

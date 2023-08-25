@@ -1,5 +1,4 @@
 ﻿using Microsoft.JSInterop;
-using System.Text.Json;
 
 namespace Funds.Data
 {
@@ -18,9 +17,8 @@ namespace Funds.Data
         }
         public async Task DrawMeChartAsync(string stock, string timespan, string multiplyer, string idOfChartsDiv)
         {
-            Console.WriteLine("Creating Chart");
             var data = await _stocksService.GetStocksOhlcAsync(stock, timespan, multiplyer);
-            await _jSRuntime.InvokeVoidAsync("createChart", data, "#"+idOfChartsDiv);
+            await _jSRuntime.InvokeVoidAsync("createChart", data, idOfChartsDiv);
         }
     }
 }
