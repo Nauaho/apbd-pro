@@ -2,7 +2,6 @@
     var chartToDelete = document.getElementById("apexchartstock");
     if (!(chartToDelete == null && chartToDelete == undefined))
         chartToDelete.remove();
-    console.log(prices);
     try {
         prices = JSON.parse(prices);
         var options = {
@@ -11,7 +10,10 @@
             }],
             chart: {
                 type: 'candlestick',
-                id: 'tock'
+                id: 'tock',
+                toolbar: {
+                    offsetY: document.body.clientHeight * 0.007
+                }
             },
             xaxis: {
                 type: 'datetime'
@@ -25,8 +27,20 @@
         var chart = new ApexCharts(document.getElementById(idElement), options);
 
         chart.render();
-        console.log("Chart rendered");
     } catch (exception) {}
+}
+
+function applyStyle(idElement, style) {
+    const el = document.getElementById(idElement);
+    el.className = style;
+    console.log(idElement + "->" + style);
+}
+
+function applyClass(cssClass, style) {
+    const elemets = document.querySelector(cssClass);
+    for( const e in elements){
+        el.className = style;
     }
+}
     
     

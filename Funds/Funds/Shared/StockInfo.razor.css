@@ -13,8 +13,46 @@
     margin-right: 20%;
 }
 
+#stock-panel {
+    margin-top: 0;
+    margin-left: 27%;
+    position: absolute;
+    z-index: 11;
+    margin-bottom: 10%;
+}
 
-/*.image-of-logo {
+.scaleButton {
+    font-size: 10px;
+    border: 0.15em groove transparent;
+    border-radius: 4px;
+    background-color: dodgerblue;
+    color: white;
+    transition-duration: 0.5s;
+}
+
+    .scaleButton:hover {
+        border: 0.15em groove;
+        background-color: white;
+        color: dodgerblue;
+        border-color: dodgerblue;
+        transition-duration: 0.5s;
+       
+    }
+
+    .scaleButton:active {
+        background-color: #d1e5ff;
+        transition-duration: 0.2s;
+    }
+
+.scaleButton-chosen {
+    font-size: 10px;
+    border: 0.15em groove;
+    border-radius: 4px;
+    background-color: white;
+    transform: scale(1.1);
+    color: chocolate;
+}
+        /*.image-of-logo {
     background-color: black;
     fill: black;
 }*/

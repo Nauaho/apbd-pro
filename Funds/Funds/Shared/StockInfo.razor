@@ -58,11 +58,11 @@
         </div>
         <div id="chart">
             <div id="stock-panel">
-                <button @onclick='() => DrawChart( "day", "1")'>1D</button>
-                <button @onclick='() => DrawChart( "day", "3")'>3D</button>
-                <button @onclick='() => DrawChart( "week", "1")'>1W</button>
-                <button @onclick='() => DrawChart( "month", "1")'>1M</button>
-                <button @onclick='() => DrawChart( "month", "3")'>3M</button>
+                <button @onclick='() => DrawChart( "day", "1", "1D")' class="scaleButton" id="1D">1D</button>
+                <button @onclick='() => DrawChart( "day", "3", "3D")' class="scaleButton" id="3D">3D</button>
+                <button @onclick='() => DrawChart( "week", "1", "1W")' class="scaleButton" id="1W">1W</button>
+                <button @onclick='() => DrawChart( "month", "1", "1M")' class="scaleButton" id="1M">1M</button>
+                <button @onclick='() => DrawChart( "month", "3", "3M")' class="scaleButton" id="3M">3M</button>
             </div>
             <div id="@chart"></div>
         </div>
@@ -77,6 +77,9 @@
     private bool firstDraw = true;
     private Stock? Stock = null!;
     private string chart = "stock-chart";
+    private string activeButtonStyle = "scaleButton-chosen";
+    private string nonActiveButtonStyle = "scaleButton";
+    private string activeButtonId = "1D";
 
     protected override async Task OnParametersSetAsync()
     {
@@ -94,6 +97,7 @@
         if (firstDraw)
         {
             await StockChartService.DrawMeChartAsync(Stock.Ticker, "day", "1", chart);
+            await StockChartService.ApplyStyleOnElementAsync(activeButtonId, activeButtonStyle);
             firstDraw = false;
         }
     }
@@ -106,11 +110,19 @@
         StateHasChanged();
     }
 
-    private async Task DrawChart( string timespan, string multiplyer)
+    private async Task DrawChart( string timespan, string multiplyer, string idButton)
     {
         if (Stock is null)
             return;
-        await StockChartService.DrawMeChartAsync(Stock.Ticker, timespan, multiplyer, chart);
+        await Task.WhenAll(
+            StockChartService.DrawMeChartAsync(Stock.Ticker, timespan, multiplyer, chart),
+            Task.Run(async () =>
+            {
+                await StockChartService.ApplyStyleOnElementAsync(idButton, activeButtonStyle);
+                await StockChartService.ApplyStyleOnElementAsync(activeButtonId, nonActiveButtonStyle);
+                activeButtonId = idButton;
+            })
+        );
     }
 
     private async Task Subscribe(Stock stock)
