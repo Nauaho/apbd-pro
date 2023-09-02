@@ -44,7 +44,6 @@ namespace WebApi.Services
             var response = await client.GetAsync(Url+ $"?apiKey={_apiKey}");
             response.EnsureSuccessStatusCode();
             var result = Convert.ToBase64String(await response.Content.ReadAsByteArrayAsync());
-            Console.WriteLine(result);
             return result;
         }
 
@@ -100,7 +99,6 @@ namespace WebApi.Services
                 Console.WriteLine($"Error: {e.Message}");
                 return null;
             }
-            //throw new NotImplementedException();
         }
 
         public async Task<TickerOpenClose?> GetTickersOpenCloseAsync(string ticker, DateOnly date)
@@ -195,11 +193,21 @@ namespace WebApi.Services
             {
                 input = input.ToUpper();
                 using var client = _httpClientFactory.CreateClient();
-                var response = await client.GetAsync(_v3+$"reference/tickers?ticker.gte={input}&active=true&apiKey={_apiKey}");
-                response.EnsureSuccessStatusCode();
-                var result = JsonConvert.DeserializeObject<SearchResultsDTO>(await response.Content.ReadAsStringAsync());
-                await _stocksRepository.AddManyTickerDetailsAsyncIfNotExists(result.results);
-                return _stocksRepository.SearchIcons( result.results);
+                var responseTask = client.GetAsync(_v3 + $"reference/tickers?ticker.gte={input}&active=true&apiKey={_apiKey}");
+                var repoSearchTask = _stocksRepository.SearchAsync(input);
+                await Task.WhenAll(responseTask, repoSearchTask);
+                var response = responseTask.Result;
+                SearchResultsDTO result;
+                var repoSearch = repoSearchTask.Result;
+                if (response.IsSuccessStatusCode)
+                {
+                    result = JsonConvert.DeserializeObject<SearchResultsDTO>(await response.Content.ReadAsStringAsync());
+                    await _stocksRepository.AddManyTickerDetailsAsyncIfNotExists(result.results);
+                    var resultWithIcons = _stocksRepository.SearchIcons(result.results);
+                    return resultWithIcons.Union(repoSearch);
+                }
+                else return repoSearch;
+                
             }
             catch (HttpRequestException)
             {

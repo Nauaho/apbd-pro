@@ -2,9 +2,6 @@
 @page "/{action}"
 @page "/{action}/{stockOrSearch}"
 @page "/{action}/{stockOrSearch}/{input}"
-@using Funds.Models;
-@using Funds.Shared;
-@using WebApi.Models.DTOs;
 @inject Funds.Data.IAuthService AuthService
 @inject Funds.Data.IStocksService StocksService
 @inject Funds.Data.ICookieService CookieService
@@ -31,7 +28,7 @@
 
     @if (stockOrSearch == "search")
     {
-        <h3>I am searching</h3>
+        <SearchResults searchInput="@input"></SearchResults>
     }
     else if (!string.IsNullOrEmpty(stockOrSearch))
     {
@@ -41,7 +38,7 @@
 
 @if (action == "watchlist" && AuthService.IsLoggedIn)
 {
-   <Watchlist></Watchlist>
+    <Watchlist></Watchlist>
 }
 
 @code {
@@ -69,7 +66,6 @@
         var tokens = await AuthService.RefreshTheToken(l,t);
         if(tokens is null)
         {
-            Console.WriteLine("AAAAAAAAAAAAAAAa");
             Navigation.NavigateTo("login");
             return;
         }

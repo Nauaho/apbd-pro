@@ -109,7 +109,7 @@ namespace WebApi.Repositories
             if(input == null )
                 return Enumerable.Empty<StocksPreview>();
             var result = await _context.TickerDetails
-                    .Where(t => t.Ticker.StartsWith(input))
+                    .Where(t => t.Ticker.StartsWith(input) || (t.Name != null && t.Name.StartsWith(input)))
                     .Select(t=> new StocksPreview
                     {
                         Ticker = t.Ticker,

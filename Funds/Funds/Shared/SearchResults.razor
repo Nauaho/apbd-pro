@@ -4,14 +4,16 @@
 
 @code
 {
+    [Parameter]
+    public string searchInput { get; set; } = null!;
+
     protected override async Task GetStocksAsync()
     {
         Stocks = await StocksService.GetWatchlistAsync();
-        StocksToShow = Stocks;
     }
 
-    protected override Task GetStocksToShowAsync()
+    protected override async Task GetStocksToShowAsync()
     {
-        return Task.CompletedTask;
+        StocksToShow = await StocksService.SearchAsync(searchInput);
     }
 }

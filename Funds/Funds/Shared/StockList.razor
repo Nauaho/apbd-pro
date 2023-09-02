@@ -1,0 +1,45 @@
+﻿@using Funds.Data;
+@using Funds.Models;
+
+@inject NavigationManager Navigation
+<div class="main">
+    <table id="watchlist">
+        <thead>
+            <tr>
+                @foreach(var s in IsColumnsAreSorted)
+                {
+                    <th @onclick="() => SortBy(s.Key)">@s.Key</th>
+                }
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var s in StocksToShow)
+            {
+                <tr class="row">
+                    <td class="column" @onclick="() => NavigateToStock(s)"><img class="icon" src="data:image/png;base64, @s.IconUrl"></td>
+                    <td class="column" @onclick="() => NavigateToStock(s)">@s.Ticker</td>
+                    <td class="column" @onclick="() => NavigateToStock(s)">@s.Name</td>
+                    <td class="column" @onclick="() => NavigateToStock(s)">@s.Locale</td>
+                    <td class="column">@if (Stocks.Any(s1 => s1.Ticker == s.Ticker))
+                        {
+                            <button class="deleteButton" @onclick="() => Unsubscribe(s.Ticker)">X</button>
+                        }
+                        else
+                        {
+                            <button class="subButton" @onclick="() => Subscribe(s)">+</button>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+@code {
+
+    protected virtual void NavigateToStock(StocksPreview s)
+    {
+        Navigation.NavigateTo($"dashboard/{s.Ticker}");
+    }
+
+}

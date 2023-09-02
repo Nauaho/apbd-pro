@@ -5,6 +5,10 @@
     position: absolute;
 }
 
+.main{
+    padding: 5%;
+}
+
 .deleteButton {
     display: none;
     background-color: rgb(203, 18, 18);
@@ -17,8 +21,19 @@
     position: relative;
 }
 
-.row{
-    display:table-row;
+.subButton {
+    display: none;
+    background-color: dodgerblue;
+    color: white;
+    border: 0px;
+}
+.row:hover .subButton {
+    display: block;
+    position: relative;
+}
+
+.row {
+    display: table-row;
 }
 
 .column {

@@ -3,30 +3,31 @@
 @inject Funds.Data.IStocksService StockService
 @inject NavigationManager Navigation
 
-
-<h1>Welcome back, @AuthService.Login!</h1>
-<div class="autocomplete">
-    <div class="search-bar">
-        <input 
-            size="search"
-            type="text" 
-            placeholder="Try smth like AAPL or Apple..." 
-            @bind-value="Input" 
-            @bind-value:event="oninput">
-        <button class="look-button">Search</button>
-    </div>
-    @if (results.Count() != 0)
-    {
-        <div class="autocomplete-items">
-            @foreach (StocksPreview s in results)
-            {
-                <div @onclick="() => AutoComplete(s)">
-                    <strong>@s.Ticker.Substring(0, oldInput.Length)</strong>@s.Ticker.Substring(oldInput.Length)
-                </div>
-            }
+<div class="main">
+    <h1>Welcome back, @AuthService.Login!</h1>
+    <div class="autocomplete">
+        <div class="search-bar">
+            <input 
+                size="search"
+                type="text" 
+                placeholder="Try smth like AAPL or Apple..." 
+                @bind-value="Input" 
+                @bind-value:event="oninput"
+                @onkeydown="OnEnterSearch">
+            <button class="look-button" @onclick="Search" >Search</button>
         </div>
-    }
-    
+        @if (results.Count() != 0)
+        {
+            <div class="autocomplete-items">
+                @foreach (StocksPreview s in results)
+                {
+                    <div @onclick="() => AutoComplete(s)">
+                        <strong></strong>@s.Ticker
+                    </div>
+                }
+            </div>
+        }
+    </div>
 </div>
 
 @code {
@@ -76,6 +77,13 @@
     private void Search()
     {
         Navigation.NavigateTo($"dashboard/search/{Input}");
+        results = Enumerable.Empty<StocksPreview>();
+    }
+
+    private void OnEnterSearch(KeyboardEventArgs e)
+    {
+        if (e.Code == "Enter" || e.Code == "NumpadEnter")
+            Search();
     }
 
     private async Task LookThrough(string? input)
@@ -85,7 +93,8 @@
         if (input is null)
             return;
         results = await StockService.SearchAsync(input);
-        results = results.Where(s => s.Ticker.StartsWith(input.ToUpper()));
+        results.Select(t => t.Name).ToList().ForEach(Console.WriteLine);
+        results = results.Where(s => s.Ticker.StartsWith(input.ToUpper()) || s.Name.ToUpper().StartsWith(input.ToUpper()));
         oldInput = input;
         await InvokeAsync(StateHasChanged);
     }

@@ -4,20 +4,20 @@
 @inject Funds.Data.IStockChartService StockChartService
 @using Funds.Models
 
+<div class="main">
+    @if (Stock is null && !informationRetrieved)
+    {
+        <h1>LOADING SCREEN</h1>
+    }
 
-@if (Stock is null && !informationRetrieved)
-{
-    <h1>LOADING SCREEN</h1>
-}
+    @if(Stock is null && informationRetrieved)
+    {
+        <h2>Sorry, we couldn't find stock called "@stock"</h2>
+    }
 
-@if(Stock is null && informationRetrieved)
-{
-    <h2>Sorry, we couldn't find stock called "@stock"</h2>
-}
-
-@if (Stock is not null && informationRetrieved)
-{
-    <div class="main">
+    @if (Stock is not null && informationRetrieved)
+    {
+    
         @if(Stock.LogoUrl is not null)
         {
             <div class="image-of-logo">
@@ -66,8 +66,9 @@
             </div>
             <div id="@chart"></div>
         </div>
-    </div>
-}
+
+    }
+</div>
 
 @code {
     [Parameter]

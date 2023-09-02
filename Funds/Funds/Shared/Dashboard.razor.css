@@ -2,6 +2,11 @@
 .autocomplete {
     position: absolute;
     display: inline-block;
+    width: 70%;
+}
+
+.main{
+    display: inline;
 }
 
 input {
@@ -12,7 +17,10 @@ input {
 }
 
 input[type=text] {
-      background-color: #f1f1f1;
+    padding: 0.35em;
+    background-color: #f1f1f1;
+    width: 40%;
+    border-radius: 4px;
 }
 
 .autocomplete-items {
@@ -37,3 +45,25 @@ input[type=text] {
     background-color: DodgerBlue !important;
     color: #ffffff;
 }
+
+.look-button {
+    padding: 0.2em;
+    border-radius: 4px;
+    border: 0.15em groove transparent;
+    background-color: dodgerblue;
+    color: white;
+    margin-left: 0.75%;
+}
+
+    .look-button:hover {
+        color: dodgerblue;
+        background-color: white;
+        border-color: dodgerblue;
+        border: 0.15em groove;
+        transition-duration: 0.3s;
+    }
+
+    .look-button:active{
+        transform: scale(1.2);
+        transition-duration: 0.3s;
+    }

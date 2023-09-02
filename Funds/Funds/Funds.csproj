@@ -10,13 +10,11 @@
   <ItemGroup>
     <None Remove="Shared\Dashboard.razor.css" />
     <None Remove="Shared\MyNavBarrazor.razor.css" />
-    <None Remove="Shared\Watchlist.razor.css" />
   </ItemGroup>
 
   <ItemGroup>
     <Content Include="Shared\Dashboard.razor.css" />
     <Content Include="Shared\MyNavBarrazor.razor.css" />
-    <Content Include="Shared\Watchlist.razor.css" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,10 +1,8 @@
 ﻿namespace Funds.Models
 {
-    public class Stock
+    public class Stock : StocksPreview
     {
-        public string? Name { get; set; }
         public string? Market { get; set; }
-        public string? Locale { get; set; }
         public string? PrimaryExchange { get; set; }
         public string? Type { get; set; }
         public bool Active { get; set; }
@@ -25,11 +23,9 @@
         public long TotalEmployees { get; set; }
         public DateTime ListDate { get; set; }
         public string? LogoUrl { get; set; }
-        public string? IconUrl { get; set; }
 
         public long ShareClassSharesOutstanding { get; set; }
         public long WeightedSharesOutstanding { get; set; }
         public int RoundLot { get; set; }
-        public string Ticker { get; set; } = null!;
     }
 }
