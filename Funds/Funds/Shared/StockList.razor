@@ -2,40 +2,56 @@
 @using Funds.Models;
 
 @inject NavigationManager Navigation
-<div class="main">
-    <table id="watchlist">
-        <thead>
-            <tr>
-                @foreach(var s in IsColumnsAreSorted)
+
+@if (DataIsfetched)
+{
+    <div class="main">
+        <table id="watchlist">
+            <thead>
+                <tr>
+                    @foreach (var s in IsColumnsAreSorted)
+                    {
+                        <th @onclick="() => SortBy(s.Key)"><p class="headers">@s.Key </p><div class="arrow @s.Value"></div></th>
+                    }
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var s in StocksToShow)
                 {
-                    <th @onclick="() => SortBy(s.Key)">@s.Key</th>
-                }
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var s in StocksToShow)
-            {
-                <tr class="row">
-                    <td class="column" @onclick="() => NavigateToStock(s)"><img class="icon" src="data:image/png;base64, @s.IconUrl"></td>
-                    <td class="column" @onclick="() => NavigateToStock(s)">@s.Ticker</td>
-                    <td class="column" @onclick="() => NavigateToStock(s)">@s.Name</td>
-                    <td class="column" @onclick="() => NavigateToStock(s)">@s.Locale</td>
-                    <td class="column">@if (Stocks.Any(s1 => s1.Ticker == s.Ticker))
+                    <tr class="row">
+                        @if (s.IconUrl is not null)
                         {
-                            <button class="deleteButton" @onclick="() => Unsubscribe(s.Ticker)">X</button>
+                            <td class="column" @onclick="() => NavigateToStock(s)"><img class="icon" src="data:image/png;base64, @s.IconUrl"></td>
                         }
                         else
                         {
-                            <button class="subButton" @onclick="() => Subscribe(s)">+</button>
+                            <td class="column" @onclick="() => NavigateToStock(s)"><div class="icon substitute"></div></td>
                         }
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
-</div>
+                        <td class="column" @onclick="() => NavigateToStock(s)">@s.Ticker</td>
+                        <td class="column" @onclick="() => NavigateToStock(s)">@s.Name</td>
+                        <td class="column" @onclick="() => NavigateToStock(s)">@s.Locale</td>
+                        <td class="column">@if (Stocks.Any(s1 => s1.Ticker == s.Ticker))
+                            {
+                                <button class="deleteButton" @onclick="() => Unsubscribe(s.Ticker)">X</button>
+                            }
+                            else
+                            {
+                                <button class="subButton" @onclick="() => Subscribe(s)">+</button>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+    <div class="loader"></div>
+}
 @code {
+
 
     protected virtual void NavigateToStock(StocksPreview s)
     {

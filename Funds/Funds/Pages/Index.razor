@@ -8,39 +8,49 @@
 @inject NavigationManager Navigation
 
 
-@if(string.IsNullOrEmpty(action))
+@if (loadingIsCompleted)
 {
-    <Basic></Basic>
-}
 
-@if (action == "login")
-{
-    <Login></Login>
-}
-@if (action == "register")
-{
-    <Register></Register>
-}
-
-@if (action == "dashboard")
-{
-    <Dashboard></Dashboard>
-
-    @if (stockOrSearch == "search")
+    @if (string.IsNullOrEmpty(action))
     {
-        <SearchResults searchInput="@input"></SearchResults>
+        <Basic></Basic>
     }
-    else if (!string.IsNullOrEmpty(stockOrSearch))
+
+    @if (action == "login")
     {
-        <StockInfo stock="@stockOrSearch"></StockInfo>
+        <Login></Login>
     }
-}
+    @if (action == "register")
+    {
+        <Register></Register>
+    }
 
-@if (action == "watchlist" && AuthService.IsLoggedIn)
+    @if (action == "dashboard")
+    {
+        <Dashboard></Dashboard>
+
+        @if (stockOrSearch == "search")
+        {
+            <SearchResults searchInput="@input"></SearchResults>
+        }
+
+        else if (!string.IsNullOrEmpty(stockOrSearch))
+        {
+            <StockInfo stock="@stockOrSearch"></StockInfo>
+        }
+
+    }
+
+    @if (action == "watchlist" && AuthService.IsLoggedIn)
+    {
+        <Watchlist></Watchlist>
+    }
+
+}
+else
 {
-    <Watchlist></Watchlist>
+    <div class="loader"></div>
 }
-
 @code {
     [Parameter]
     public string action { get; set; } = null!;
@@ -49,9 +59,18 @@
     [Parameter]
     public string input { get; set; } = null!;
 
+    private bool loadingIsCompleted = false;
+
+    protected override void OnParametersSet()
+    {
+        AuthService.Action = action;
+        Console.WriteLine(AuthService.Action);
+    }
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if(!firstRender)
+        Console.WriteLine($"From after render: {AuthService.Action}");
+        if (loadingIsCompleted)
             return;
 
         var t = await CookieService.ReadCookieAsync("refreshToken");
@@ -60,6 +79,7 @@
         if (t == null || l == null)
         {
             Navigation.NavigateTo("");
+            loadingIsCompleted = true;
             return;
         }
 
@@ -67,11 +87,14 @@
         if(tokens is null)
         {
             Navigation.NavigateTo("login");
+            loadingIsCompleted = true;
             return;
         }
         await CookieService.CreateCookieAsync("login", l, DateTime.Now.AddDays(5));
         await CookieService.CreateCookieAsync("refreshToken", tokens.RefreshToken, DateTime.Now.AddDays(5));
+        loadingIsCompleted = true;
         if (string.IsNullOrEmpty(action) || action == "login" || action == "register")
             Navigation.NavigateTo("dashboard");
+        StateHasChanged();
     }
 }

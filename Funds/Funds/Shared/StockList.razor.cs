@@ -9,8 +9,11 @@ namespace Funds.Shared
         [Inject]
         public IStocksService StocksService { get; set; } = default(StocksService)!;
         protected virtual IEnumerable<StocksPreview> StocksToShow { get; set; } = new List<StocksPreview>();
+        protected virtual IEnumerable<IEnumerable<StocksPreview>> PaginatedStocksToShow { get; set; } = new List<List<StocksPreview>>();
         protected virtual IEnumerable<StocksPreview> Stocks { get; set; } = new List<StocksPreview>();
         protected virtual IDictionary<string, string> IsColumnsAreSorted { get; set; } = new Dictionary<string, string>();
+        protected virtual bool DataIsfetched { get; set; } = false;
+
 
         protected virtual async Task Unsubscribe(string ticker)
         {
@@ -41,34 +44,36 @@ namespace Funds.Shared
         {
             IsColumnsAreSorted = new Dictionary<string, string>()
         {
-            { "Logo", "Uncertain" },
-            { "Symbol", "Uncertain" },
-            { "Name", "Uncertain" },
-            { "Country", "Uncertain" },
+            { "Logo", "uncertain" },
+            { "Symbol", "uncertain" },
+            { "Name", "uncertain" },
+            { "Country", "uncertain" },
         };
             await Task.WhenAll
             (
                 GetStocksAsync(),
                 GetStocksToShowAsync()
             );
-
+            DataIsfetched = true;
             base.OnInitialized();
-            ShouldRender();
+            StateHasChanged();
         }
 
         protected virtual Task SortBy(string column)
         {
             var c = IsColumnsAreSorted[column];
             if (c is null) return Task.CompletedTask;
-            if (c == "Sorted")
+            foreach ( var kvp in IsColumnsAreSorted) 
+                IsColumnsAreSorted[kvp.Key] = "uncertain";
+            if (c == "sorted")
             {
                 StocksToShow = StocksToShow.OrderByDescending(x => x.YieldProps()[column]);
-                IsColumnsAreSorted[column] =  "Sorted Reversed";
+                IsColumnsAreSorted[column] =  "sorted-reversed";
             }
             else
             {
                 StocksToShow = StocksToShow.OrderBy(x => x.YieldProps()[column]);
-                IsColumnsAreSorted[column] = "Sorted";
+                IsColumnsAreSorted[column] = "sorted";
             }
             return Task.FromResult(StocksToShow);
         }

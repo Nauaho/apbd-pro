@@ -50,8 +50,24 @@
     background-color: white;
     transform: scale(1.1);
     color: chocolate;
+    pointer-events: none;
 }
-        /*.image-of-logo {
-    background-color: black;
-    fill: black;
-}*/
+
+.loader {
+    margin-top: auto;
+    margin-bottom: auto;
+    margin: auto;
+    width: 15em;
+    height: 15em;
+    border-radius: 50%;
+    border: 1.7em solid;
+    border-color: dodgerblue #0000;
+    animation: s1 1s infinite;
+}
+
+@keyframes s1 {
+    to {
+        transform: rotate(.5turn)
+    }
+}
+

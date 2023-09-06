@@ -14,6 +14,7 @@
                 @bind-value="Input" 
                 @bind-value:event="oninput"
                 @onkeydown="OnEnterSearch">
+            <div class="loader @loaderHide"></div>
             <button class="look-button" @onclick="Search" >Search</button>
         </div>
         @if (results.Count() != 0)
@@ -22,7 +23,7 @@
                 @foreach (StocksPreview s in results)
                 {
                     <div @onclick="() => AutoComplete(s)">
-                        <strong></strong>@s.Ticker
+                        <p>@s.Name</p>
                     </div>
                 }
             </div>
@@ -35,6 +36,7 @@
     private string input = null!;
     private System.Timers.Timer timer = default!;
     private string oldInput = null!;
+    private string loaderHide = "hidden";
     public string Input 
     { 
         get => input;
@@ -64,6 +66,7 @@
     private async void ElapsedSearch(object? sender, EventArgs e)
     {
         DisposeTimer();
+        loaderHide = "";
         await LookThrough(input);
     }
 
@@ -78,6 +81,7 @@
     {
         Navigation.NavigateTo($"dashboard/search/{Input}");
         results = Enumerable.Empty<StocksPreview>();
+        input = "";
     }
 
     private void OnEnterSearch(KeyboardEventArgs e)
@@ -93,9 +97,9 @@
         if (input is null)
             return;
         results = await StockService.SearchAsync(input);
-        results.Select(t => t.Name).ToList().ForEach(Console.WriteLine);
         results = results.Where(s => s.Ticker.StartsWith(input.ToUpper()) || s.Name.ToUpper().StartsWith(input.ToUpper()));
         oldInput = input;
+        loaderHide = "hidden";
         await InvokeAsync(StateHasChanged);
     }
 }

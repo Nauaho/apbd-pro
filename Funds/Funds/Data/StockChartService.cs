@@ -5,7 +5,7 @@ namespace Funds.Data
     public interface IStockChartService
     {
         public Task ApplyStyleOnElementAsync(string idElement, string style);
-        public Task DrawMeChartAsync(string stock, string timespan, string multiplyer, string idOfChartsDiv);
+        public Task<bool> DrawMeChartAsync(string stock, string timespan, string multiplyer, string idOfChartsDiv);
     }
     public class StockChartService : IStockChartService
     {
@@ -16,10 +16,13 @@ namespace Funds.Data
             _stocksService = stocksService;
             _jSRuntime = jSRuntime;
         }
-        public async Task DrawMeChartAsync(string stock, string timespan, string multiplyer, string idOfChartsDiv)
+        public async Task<bool> DrawMeChartAsync(string stock, string timespan, string multiplyer, string idOfChartsDiv)
         {
             var data = await _stocksService.GetStocksOhlcAsync(stock, timespan, multiplyer);
+            if(data is null)
+                return false;
             await _jSRuntime.InvokeVoidAsync("createChart", data, idOfChartsDiv);
+            return true;
         }
 
         public async Task ApplyStyleOnElementAsync(string idElement, string style)

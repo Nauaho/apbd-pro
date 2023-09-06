@@ -14,6 +14,22 @@
     private string dashboardStyleButtonClass = "navbar-item";
     private string watchlistStyleButtonClass = "navbar-item";
 
+    protected override void OnParametersSet()
+    {
+        if(AuthService.Action == "dashboard")
+        {
+            watchlistStyleButtonClass = "navbar-item";
+            dashboardStyleButtonClass = "navbar-item-active";
+            return;
+        }
+        if (AuthService.Action == "watchlist")
+        {
+            watchlistStyleButtonClass = "navbar-item-active";
+            dashboardStyleButtonClass = "navbar-item";
+            return;
+        }
+    }
+
     void Watchlist()
     {
         if (!AuthService.IsLoggedIn)

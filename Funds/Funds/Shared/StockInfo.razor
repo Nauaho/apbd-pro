@@ -7,7 +7,7 @@
 <div class="main">
     @if (Stock is null && !informationRetrieved)
     {
-        <h1>LOADING SCREEN</h1>
+        <div class="loader"></div>
     }
 
     @if(Stock is null && informationRetrieved)
@@ -57,16 +57,18 @@
             </div>
         </div>
         <div id="chart">
-            <div id="stock-panel">
-                <button @onclick='() => DrawChart( "day", "1", "1D")' class="scaleButton" id="1D">1D</button>
-                <button @onclick='() => DrawChart( "day", "3", "3D")' class="scaleButton" id="3D">3D</button>
-                <button @onclick='() => DrawChart( "week", "1", "1W")' class="scaleButton" id="1W">1W</button>
-                <button @onclick='() => DrawChart( "month", "1", "1M")' class="scaleButton" id="1M">1M</button>
-                <button @onclick='() => DrawChart( "month", "3", "3M")' class="scaleButton" id="3M">3M</button>
-            </div>
-            <div id="@chart"></div>
+            @if (chartIsDrawn)
+            {
+                <div id="stock-panel">
+                    <button @onclick='() => DrawChart( "day", "1", "1D")' class="scaleButton-chosen" id="1D">1D</button>
+                    <button @onclick='() => DrawChart( "day", "3", "3D")' class="scaleButton" id="3D">3D</button>
+                    <button @onclick='() => DrawChart( "week", "1", "1W")' class="scaleButton" id="1W">1W</button>
+                    <button @onclick='() => DrawChart( "month", "1", "1M")' class="scaleButton" id="1M">1M</button>
+                    <button @onclick='() => DrawChart( "month", "3", "3M")' class="scaleButton" id="3M">3M</button>
+                 </div>
+             }
+        <div id="@chart"></div>
         </div>
-
     }
 </div>
 
@@ -76,6 +78,7 @@
     public IEnumerable<Stock> Watchlist { get; set; } = new List<Stock>();
     private bool informationRetrieved = false;
     private bool firstDraw = true;
+    private bool chartIsDrawn = false;
     private Stock? Stock = null!;
     private string chart = "stock-chart";
     private string activeButtonStyle = "scaleButton-chosen";
@@ -84,10 +87,12 @@
 
     protected override async Task OnParametersSetAsync()
     {
+        Console.WriteLine(stock);
         Stock =  await StocksService.GetStockInfoAsync(stock);
         Watchlist = await StocksService.GetWatchlistAsync();
         informationRetrieved = true ;
         firstDraw = true;
+        chartIsDrawn = false;
     }
 
 
@@ -97,9 +102,9 @@
             return;
         if (firstDraw)
         {
-            await StockChartService.DrawMeChartAsync(Stock.Ticker, "day", "1", chart);
-            await StockChartService.ApplyStyleOnElementAsync(activeButtonId, activeButtonStyle);
+            chartIsDrawn = await StockChartService.DrawMeChartAsync(Stock.Ticker, "day", "1", chart);
             firstDraw = false;
+            StateHasChanged();
         }
     }
 
@@ -115,8 +120,9 @@
     {
         if (Stock is null)
             return;
+        var chartTask = StockChartService.DrawMeChartAsync(Stock.Ticker, timespan, multiplyer, chart);
         await Task.WhenAll(
-            StockChartService.DrawMeChartAsync(Stock.Ticker, timespan, multiplyer, chart),
+            chartTask,
             Task.Run(async () =>
             {
                 await StockChartService.ApplyStyleOnElementAsync(idButton, activeButtonStyle);
@@ -124,6 +130,7 @@
                 activeButtonId = idButton;
             })
         );
+        chartIsDrawn = chartTask.Result;
     }
 
     private async Task Subscribe(Stock stock)

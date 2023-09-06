@@ -9,17 +9,20 @@ namespace Funds.Data
 {
     public interface IAuthService
     {
+        public string Action { get; set; }
         public bool IsLoggedIn { get; }
         public string Login { get; }
         public string AccessToken { get; }
         public string RefreshToken { get; }
         public Task<TokenSet?> LoginUser(string username, string password);
         public Task<bool> LogOut();
+        public Task<TokenSet?> RefreshTheToken();
         public Task<TokenSet?> RefreshTheToken(string username, string refreshToken);
         public Task<TokenSet?> RegisterUser(string username, string password, string? email);
     }
     public class AuthService : IAuthService
     {
+        public string Action { get; set; } = "";
         public bool IsLoggedIn { get { return !(RefreshToken == null || Login == null); } }
         public string Login { get; set; } = null!;
         public string AccessToken { get; set; } = null!;
@@ -112,6 +115,7 @@ namespace Funds.Data
                 Login = username;
                 AccessToken = result.AccessToken;
                 RefreshToken = result.RefreshToken;
+                Console.WriteLine("Access Token has been Updated");
                 return result;
             }
             catch (Exception) 
@@ -143,6 +147,11 @@ namespace Funds.Data
                 Login = null!;
                 return false;
             }
+        }
+
+        public Task<TokenSet?> RefreshTheToken()
+        {
+            return RefreshTheToken(Login, RefreshToken);
         }
     }
 }

@@ -1,10 +1,14 @@
 ﻿#watchlist {
     font-size: large;
-    width: 50%;
+    width: 80%;
     text-align: center;
     position: absolute;
 }
 
+.headers {
+    margin-left: 15%;
+    display: inline-flex;
+}
 .main{
     padding: 5%;
 }
@@ -43,4 +47,47 @@
 .icon {
     width: 50%;
     height: 50%;
+}
+
+.substitute{
+    background-color: white;
+}
+
+.arrow {
+    width: 0;
+    height: 0;
+    border-left: 0.5em solid transparent;
+    border-right: 0.5em solid transparent;
+    display: inline-flex;
+    margin-left: 5%;
+}
+
+.uncertain{
+    opacity: 0;
+}
+
+.sorted {
+    border-top: 0.5em solid black;
+}
+
+.sorted-reversed {
+    border-bottom: 0.5em solid black;
+}
+
+.loader {
+    margin-top: auto;
+    margin-bottom: auto;
+    margin: auto;
+    width: 15em;
+    height: 15em;
+    border-radius: 50%;
+    border: 1.7em solid;
+    border-color: dodgerblue #0000;
+    animation: s1 1s infinite;
+}
+
+@keyframes s1 {
+    to {
+        transform: rotate(.5turn)
+    }
 }
