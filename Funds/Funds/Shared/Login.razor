@@ -1,6 +1,7 @@
 ﻿@inject Funds.Data.IAuthService AuthService
 @inject Funds.Data.ICookieService CookieService
 @inject NavigationManager Navigation
+@attribute [AllowAnonymous]
 
 <p hidden="@dontShowErrorMessage"> @errorMessage</p>
 <h3>Login</h3>
@@ -39,8 +40,8 @@
         }
         refreshToken = tokens.RefreshToken;
         accessToken = tokens.AccessToken;
-        await CookieService.CreateCookieAsync("refreshToken", refreshToken, DateTime.Now.AddDays(5));
-        await CookieService.CreateCookieAsync("login", login, DateTime.Now.AddDays(5));
+        //await CookieService.CreateCookieAsync("refreshToken", refreshToken, DateTime.Now.AddDays(5));
+        //await CookieService.CreateCookieAsync("login", login, DateTime.Now.AddDays(5));
         dontShowErrorMessage = true;
         Navigation.NavigateTo("dashboard");
     }

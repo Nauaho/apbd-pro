@@ -4,6 +4,10 @@ using Newtonsoft.Json;
 using WebApi.Models.DTOs;
 using Newtonsoft.Json.Linq;
 using System.Net.Http.Headers;
+using System.Net;
+using Funds.Models.DTO;
+using System.Net.Http;
+using Microsoft.AspNetCore.Components.Authorization;
 
 namespace Funds.Data
 {
@@ -53,16 +57,19 @@ namespace Funds.Data
                 using var response = await client.PostAsync(_apiLink + "/api/users/login", content);
                 if (!response.IsSuccessStatusCode)
                     return null;
-                var value = JsonConvert.DeserializeObject<TokenSet>(await response.Content.ReadAsStringAsync());
+                var value = JsonConvert.DeserializeObject<Token>(await response.Content.ReadAsStringAsync());
                 if (value is null)
                     return null;
                 Login = username;
                 AccessToken = value.AccessToken;
-                RefreshToken = value.RefreshToken;
-                return value;
+                var cookies = GetCookies(response);
+                cookies.ToList().ForEach(cookie => Console.WriteLine(cookie.Name + " : " + cookie.Value));
+                Console.WriteLine("accessToken : " + value.AccessToken);
+                return new TokenSet {AccessToken = AccessToken, RefreshToken = RefreshToken };
             }
-            catch (Exception)
+            catch (Exception e)
             {
+                Console.WriteLine(e.Message);
                 return null;
             }
         }
@@ -77,25 +84,46 @@ namespace Funds.Data
                     Login = username,
                     Password = password
                 });
+                var cookieContainer = new CookieContainer();
                 using HttpClient client = _httpClientFactory.CreateClient();
                 using StringContent content = new(json, Encoding.UTF8, "application/json");
                 using var response = await client.PostAsync(_apiLink + "/api/users/register", content);
                 if (!response.IsSuccessStatusCode)
                     return null;
 
-                var result = JsonConvert.DeserializeObject<TokenSet>( await response.Content.ReadAsStringAsync() );
+                var result = JsonConvert.DeserializeObject<Token>( await response.Content.ReadAsStringAsync() );
                 if(result is null)
                     return null;
                 Login = username;
                 AccessToken = result.AccessToken;
-                RefreshToken = result.RefreshToken;
-                return result;
+                RefreshToken = cookieContainer.GetCookies(new Uri(_apiLink)).First(c => c.Name == "refreshToken").Value;
+                return new TokenSet { AccessToken = AccessToken, RefreshToken = RefreshToken };
             }
-            catch (Exception)
+            catch (Exception e)
             {
+                Console.WriteLine(e.Message);
                 return null;
             }
-}
+        }
+
+        public IEnumerable<CookieState> GetCookies(HttpResponseMessage? message)
+        {
+            if (message == null)
+                return new List<CookieState>();
+            if (message.Headers.Contains("Set-Cookie"))
+            {
+                var result = new List<CookieState>();
+                var nonParsedcookies = message.Headers.GetValues("Set-Cookie");
+                foreach (var cookie in nonParsedcookies)
+                {
+                    var key = CookieHeaderValue.TryParse(cookie, out var value);
+                    if (key)
+                        result.AddRange(value.Cookies);
+                }
+                return result;
+            }
+            return new List<CookieState>();
+        }
         public async Task<TokenSet?> RefreshTheToken(string username, string refreshToken)
         {
             try
@@ -104,19 +132,19 @@ namespace Funds.Data
                 {
                     rToken = refreshToken
                 });
+                var cookieContainer = new CookieContainer();
                 using HttpClient client = _httpClientFactory.CreateClient();
                 using StringContent content = new(json, Encoding.UTF8, "application/json");
                 using var response = await client.PostAsync(_apiLink + "/api/users/refresh/token", content);
                 if (!response.IsSuccessStatusCode)
                     return null;
-                var result = JsonConvert.DeserializeObject<TokenSet>(await response.Content.ReadAsStringAsync());
+                var result = JsonConvert.DeserializeObject<Token>(await response.Content.ReadAsStringAsync());
                 if (result is null)
                     return null;
                 Login = username;
                 AccessToken = result.AccessToken;
-                RefreshToken = result.RefreshToken;
-                Console.WriteLine("Access Token has been Updated");
-                return result;
+                RefreshToken = cookieContainer.GetCookies(new Uri(_apiLink)).First(c => c.Name == "refreshToken").Value;
+                return new TokenSet { AccessToken = AccessToken, RefreshToken = RefreshToken };
             }
             catch (Exception) 
             {
@@ -131,7 +159,6 @@ namespace Funds.Data
         {
             try
             {
-
                 using HttpClient client = _httpClientFactory.CreateClient();
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AccessToken);
                 using var response = await client.DeleteAsync(_apiLink + $"/api/users/logout?token={RefreshToken}");

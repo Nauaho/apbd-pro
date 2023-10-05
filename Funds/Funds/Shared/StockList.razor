@@ -1,7 +1,8 @@
 ﻿@using Funds.Data;
 @using Funds.Models;
-
 @inject NavigationManager Navigation
+@attribute [Authorize]
+
 
 @if (DataIsfetched)
 {

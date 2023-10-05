@@ -2,6 +2,7 @@
 @inject IAuthService AuthService
 @inject ICookieService CookieService
 @inject NavigationManager Navigation
+@attribute [AllowAnonymous]
 
 <h3>Register</h3>
 
@@ -47,7 +48,7 @@
             ShowError("Sorry, the email or login you have submitted are already in use");
         else
         {
-            await CookieService.CreateCookieAsync("refreshToken", tokens.RefreshToken, DateTime.Now.AddDays(5));
+            //await CookieService.CreateCookieAsync("refreshToken", tokens.RefreshToken, DateTime.Now.AddDays(5));
             Navigation.NavigateTo("dashboard"); 
             dontShowErrorMessage = true;
         }

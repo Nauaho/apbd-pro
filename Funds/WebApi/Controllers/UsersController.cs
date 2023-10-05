@@ -27,12 +27,21 @@ namespace WebApi.Controllers
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> Login(RegisterOrLoginRequest rl)
+        public async Task<IActionResult> Login( RegisterOrLoginRequest rl)
         {
             var rt = await _usersRepository.CheckUserAsync(rl);
             if (rt is null)
                 return Unauthorized();
-            return Ok(new {RefreshToken = rt.Token, AccessToken = GenerateJWT(rt.Session) });
+            var cookieOptions = new CookieOptions
+            {
+                HttpOnly = true,
+                IsEssential = true,
+                Secure = true,
+                SameSite = SameSiteMode.Strict,
+                Expires = DateTime.UtcNow.AddDays(5)
+            };
+            Response.Cookies.Append("refresh-token", rt.Token, cookieOptions);
+            return Ok( new { AccessToken = GenerateJWT(rt.Session) });
         }
 
         [HttpPost("register")]
@@ -42,16 +51,32 @@ namespace WebApi.Controllers
             var res = await _usersRepository.AddUserAsync(rl);
             if (res == null)
                 return BadRequest();
-            return Created($"api/users/{res.UserLogin}", new { RefreshToken = res.Token, AccessToken = GenerateJWT(res.Session) });
+            var cookieOptions = new CookieOptions
+            {
+                Secure = true,
+                HttpOnly = true,
+                Expires = DateTimeOffset.UtcNow.AddDays(5),
+                SameSite = SameSiteMode.Strict
+            };
+            Response.Cookies.Append("refreshToken", res.Token, cookieOptions);
+            return Created($"api/users/{res.UserLogin}", new { AccessToken = GenerateJWT(res.Session) });
         }
 
         [HttpPost("refresh/token")]
         public async Task<IActionResult> NewAccessToken(RefreshToken rt)
         {
             var res = await _usersRepository.UpdateRefreshTokenAsync(rt.RToken);
-            if (res is not null)
-                return Ok(new { RefreshToken = res.Token, AccessToken = GenerateJWT(res.Session) });
-            else { return Unauthorized(); }
+            if (res is null)
+                return Unauthorized();
+            var cookieOptions = new CookieOptions
+            {
+                Secure = true,
+                HttpOnly = true,
+                Expires = DateTimeOffset.UtcNow.AddDays(5),
+                SameSite = SameSiteMode.Strict
+            };
+            Response.Cookies.Append("refreshToken", res.Token, cookieOptions);
+            return Ok(new { AccessToken = GenerateJWT(res.Session) });
         }
 
         private string? GenerateJWT(string session)
@@ -84,7 +109,6 @@ namespace WebApi.Controllers
             var result = await _usersRepository.LogUserOut(token, aTSession);
             if (result)
                 return Ok();
-
             return NotFound();
         }
 

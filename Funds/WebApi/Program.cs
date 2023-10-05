@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using System.Threading.RateLimiting;
@@ -12,28 +13,6 @@ using WebApi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
-//builder.Services.AddRateLimiter(options =>
-//{
-//    options.RejectionStatusCode = 404;
-//    //options.AddTokenBucketLimiter("Token", options =>
-//    //{
-//    //    options.TokenLimit = 50;
-//    //    options.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
-//    //    options.AutoReplenishment = true;
-//    //    options.ReplenishmentPeriod = TimeSpan.FromSeconds(10);
-//    //    options.TokensPerPeriod = 10;
-//    //    options.QueueLimit = 10;
-//    //});
-//    options.AddFixedWindowLimiter("fixed", options =>
-//    {
-//        options.Window = TimeSpan.FromMinutes(1);
-//        options.PermitLimit = 60;
-//        options.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
-//        options.QueueLimit = 5;
-//    });
-//});
 builder.Services.AddDbContext<ProContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
 builder.Services.AddHttpClient();
@@ -41,6 +20,17 @@ builder.Services.AddScoped<IStocksService, StocksService>();
 builder.Services.AddScoped<IUsersRepository, UsersRepository>();
 builder.Services.AddSingleton<PasswordHasher<User>>();
 builder.Services.AddScoped<IStocksRepository, StocksRepository>();
+var corsName = "myCors";
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: corsName,
+    policy =>
+    {
+        policy
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -66,6 +56,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
+app.UseRouting();
 
 //Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -73,7 +64,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
+app.UseCors(corsName);
+app.UseAuthentication();
 app.UseAuthorization();
 //app.UseRateLimiter();
 app.MapControllers();

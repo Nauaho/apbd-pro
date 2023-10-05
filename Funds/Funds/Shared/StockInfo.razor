@@ -3,6 +3,7 @@
 @inject NavigationManager Navigation
 @inject Funds.Data.IStockChartService StockChartService
 @using Funds.Models
+@attribute [Authorize]
 
 <div class="main">
     @if (Stock is null && !informationRetrieved)
